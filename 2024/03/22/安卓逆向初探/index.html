@@ -1,0 +1,378 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>安卓逆向初探 | EPs1l0h's Castle</title><meta name="author" content="EPs1l0h"><meta name="copyright" content="EPs1l0h"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="环境配置整一个redmi老年机，解bl锁，线刷android11，上magisk面具，安装 zygisk+LSPosed 框架即可。可以创建一个LSPosed寄生管理器快捷方式。 一些工具 MT &amp; NP 管理器：安卓端的神器，可以干很多事情比如提取安装包，反smail字节码，反编译，patch，自动签名，全局搜索等 开发者助手，开发助手，算法助手：hook软件，可以查看每个activit">
+<meta property="og:type" content="article">
+<meta property="og:title" content="安卓逆向初探">
+<meta property="og:url" content="https://example.com/2024/03/22/%E5%AE%89%E5%8D%93%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/index.html">
+<meta property="og:site_name" content="EPs1l0h&#39;s Castle">
+<meta property="og:description" content="环境配置整一个redmi老年机，解bl锁，线刷android11，上magisk面具，安装 zygisk+LSPosed 框架即可。可以创建一个LSPosed寄生管理器快捷方式。 一些工具 MT &amp; NP 管理器：安卓端的神器，可以干很多事情比如提取安装包，反smail字节码，反编译，patch，自动签名，全局搜索等 开发者助手，开发助手，算法助手：hook软件，可以查看每个activit">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+<meta property="article:published_time" content="2024-03-22T05:25:14.000Z">
+<meta property="article:modified_time" content="2024-03-30T16:55:19.073Z">
+<meta property="article:author" content="EPs1l0h">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://example.com/2024/03/22/%E5%AE%89%E5%8D%93%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '安卓逆向初探',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-03-31 00:55:19'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.2.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">45</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><hr/></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">EPs1l0h's Castle</a></span><div id="menus"><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">安卓逆向初探</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-03-22T05:25:14.000Z" title="发表于 2024-03-22 13:25:14">2024-03-22</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-03-30T16:55:19.073Z" title="更新于 2024-03-31 00:55:19">2024-03-31</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="安卓逆向初探"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="环境配置"><a href="#环境配置" class="headerlink" title="环境配置"></a>环境配置</h1><p>整一个redmi老年机，解bl锁，线刷android11，上magisk面具，安装 zygisk+LSPosed 框架即可。可以创建一个LSPosed寄生管理器快捷方式。</p>
+<h1 id="一些工具"><a href="#一些工具" class="headerlink" title="一些工具"></a>一些工具</h1><ul>
+<li>MT &amp; NP 管理器：安卓端的神器，可以干很多事情比如提取安装包，反smail字节码，反编译，patch，自动签名，全局搜索等</li>
+<li>开发者助手，开发助手，算法助手：hook软件，可以查看每个activity的资源并显示信息，防弹窗等等</li>
+<li>LSPosed：一个hook框架，作用域切换方便</li>
+<li>秋之盒：一个adb前端，下载的apk文件可以通过它直接安装，还有一些其它功能，用电脑端操作手机非常方便</li>
+<li>jdax-gui，GDA，JEB：电脑端的反编译工具，JEB支持动态调试</li>
+<li>xAPPdebug：修改apk debug权限</li>
+</ul>
+<h1 id="安卓动调"><a href="#安卓动调" class="headerlink" title="安卓动调"></a>安卓动调</h1><ol>
+<li><p>修改apk文件为可调式，可以添加 xml 文件的 <application> 标签里添加 <code>android:isdebuggable</code>，或者使用xAPPdebug软件，或者使用adb命令：</application></p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">adb shell</span><br><span class="line">su</span><br><span class="line">magisk resetprop ro.debuggable 1</span><br><span class="line">stop;start</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>打开开发者选项启动USB调试</p>
+</li>
+<li><p><code>adb devices</code> 查看设备</p>
+</li>
+<li><p>```sh<br>adb shell am start -D -n 包名/类名 如（com.ep.example/.ui.MainActivity）<br>am start -n 表示启动一个activity<br>am start -D 表示将应用设置为可调试模式</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">5. 步骤4过后，手机端会显示正在启动debugg模式，说明应用启动成功，接下来我们启用 JEB 附加调试</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>ctrl + F6 步入方法<br>F6 步过<br>F7 跳出方法<br>ctrl + R 运行到光标处（需要选中某一行）</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br><span class="line"># log 插桩</span><br><span class="line"></span><br><span class="line">定义：Log插桩指的是反编译APK文件时，在对应的smali文件里，添加相应的smali代码，将程序中的关键信息，以log日志的形式进行输出。</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>invoke-static {对应寄存器}, Lcom/mtools/LogUtils;-&gt;v(Ljava/lang/Object;)V</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"># APK 签名</span><br><span class="line"></span><br><span class="line">&gt; 通过对 Apk 进行签名，开发者可以证明对 Apk 的所有权和控制权，可用于安装和更新其应用。而在 Android 设备上的安装 Apk ，如果是一个没有被签名的 Apk，则会被拒绝安装。在安装 Apk 的时候，软件包管理器也会验证 Apk 是否已经被正确签名，并且通过签名证书和数据摘要验证是否合法没有被篡改。只有确认安全无篡改的情况下，才允许安装在设备上。</span><br><span class="line"></span><br><span class="line">简单来说，APK 的签名主要作用有两个：</span><br><span class="line"></span><br><span class="line">1. 证明 APK 的所有者（APK是谁开发的）</span><br><span class="line">2. 允许 Android 市场和设备校验 APK 的正确性。</span><br><span class="line"></span><br><span class="line"># 签名校验</span><br><span class="line"></span><br><span class="line">不做任何修改，直接签名安装，应用闪退则说明大概率有签名校验，一般来说，普通的签名校验会导致软件的闪退，黑屏，卡启动页等。</span><br><span class="line">当然，以上都算是比较好的，有一些比较狠的作者，则会直接rm -rf /，把基带都格掉的一键变砖。</span><br><span class="line"></span><br><span class="line">特征：</span><br><span class="line"></span><br><span class="line">```java</span><br><span class="line">kill/killProcess-----kill/KillProcess()可以杀死当前应用活动的进程，这一操作将会把所有该进程内的资源（包括线程全部清理掉）.当然，由于ActivityManager时刻监听着进程，一旦发现进程被非正常Kill，它将会试图去重启这个进程。这就是为什么，有时候当我们试图这样去结束掉应用时，发现它又自动重新启动的原因.</span><br><span class="line"></span><br><span class="line">system.exit-----杀死了整个进程，这时候活动所占的资源也会被释放。</span><br><span class="line"></span><br><span class="line">finish----------仅仅针对Activity，当调用finish()时，只是将活动推向后台，并没有立即释放内存，活动的资源并没有被清理</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>还有一种三角校验：就是so检测dex，动态加载的dex(在软件运行时会解压释放一段dex文件，检测完后就删除)检测so，dex检测动态加载的dex</p>
+<h1 id="签名校验对抗"><a href="#签名校验对抗" class="headerlink" title="签名校验对抗"></a>签名校验对抗</h1><h2 id="方法一"><a href="#方法一" class="headerlink" title="方法一"></a>方法一</h2><p>使用核心破解插件，不进行签名使用app</p>
+<h2 id="方法二"><a href="#方法二" class="headerlink" title="方法二"></a>方法二</h2><p>一键过签名工具，例如MT、NP、ARMPro、CNFIX、Modex的去除签名校验功能</p>
+<h2 id="方法三"><a href="#方法三" class="headerlink" title="方法三"></a>方法三</h2><p>具体分析签名校验逻辑(手撕签名校验)，可以用MT &amp; NP 管理器进行patch</p>
+<p>例如：首先用算法助手开启拦截应用退出以及读取应用签名监听，从而定位到签名算法的具体位置，然后使用jdax-gui进行反编译找到签名逻辑，一个简单的签名校验如下，系统将应用的签名信息封装在 PackageInfo 中，调用 PackageManager 的 getPackageInfo(String packageName, int flags) 即可获取指定包名的签名信息</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="type">boolean</span> <span class="title function_">SignCheck</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">String</span> <span class="variable">trueSignMD5</span> <span class="operator">=</span> <span class="string">&quot;d0add9987c7c84aeb7198c3ff26ca152&quot;</span>;</span><br><span class="line">    <span class="type">String</span> <span class="variable">nowSignMD5</span> <span class="operator">=</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// 得到签名的MD5</span></span><br><span class="line">        <span class="type">PackageInfo</span> <span class="variable">packageInfo</span> <span class="operator">=</span> getPackageManager().getPackageInfo(getPackageName(),PackageManager.GET_SIGNATURES);</span><br><span class="line">        Signature[] signs = packageInfo.signatures;</span><br><span class="line">        <span class="type">String</span> <span class="variable">signBase64</span> <span class="operator">=</span> Base64Util.encodeToString(signs[<span class="number">0</span>].toByteArray());</span><br><span class="line">        nowSignMD5 = MD5Utils.MD5(signBase64);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (PackageManager.NameNotFoundException e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> trueSignMD5.equals(nowSignMD5);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过算法助手的hook，我们可以获取我们重新签名后的应用签名，程序本身会有一个写死的待验证签名，我们把这个待验证签名修改了即可。</p>
+<h2 id="方法四"><a href="#方法四" class="headerlink" title="方法四"></a>方法四</h2><p>io 重定向：VA&amp;SVC：ptrace+seccomp</p>
+<p><a target="_blank" rel="noopener" href="https://bbs.kanxue.com/thread-273160.htm">[原创]SVC的TraceHook沙箱的实现&amp;无痕Hook实现思路</a></p>
+<h1 id="手动实现PM代理"><a href="#手动实现PM代理" class="headerlink" title="手动实现PM代理"></a>手动实现PM代理</h1><p>PackageManagerService（简称PMS），是Android系统核心服务之一，处理包管理相关的工作，常见的比如安装、卸载应用等。</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/fourbrother/HookPmsSignature">fourbrother/HookPmsSignature: Android中Hook 应用签名方法</a></p>
+<h1 id="IO-重定向"><a href="#IO-重定向" class="headerlink" title="IO 重定向"></a>IO 重定向</h1><p>就是在读A文件的时候指向B文件</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/virjarRatel/ratel-core">virjarRatel/ratel-core</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/asLody/VirtualApp">asLody/VirtualApp: Virtual Engine for Android</a></p>
+<h1 id="其他检测手段"><a href="#其他检测手段" class="headerlink" title="其他检测手段"></a>其他检测手段</h1><p>还有一些其他检测手段，这里直接放上原文吧</p>
+<p><a target="_blank" rel="noopener" href="https://www.52pojie.cn/thread-1731181-1-1.html">校验的N次方-签名校验对抗、PM代{过}{滤}理、IO重定向</a></p>
+<h1 id="smail-变量赋值"><a href="#smail-变量赋值" class="headerlink" title="smail 变量赋值"></a>smail 变量赋值</h1><figure class="highlight smalltalk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">const/<span class="number">4</span>: <span class="number">4</span>bit</span><br><span class="line">const/<span class="number">16</span>:<span class="number">16</span>bit</span><br><span class="line">const:<span class="number">32</span>bit</span><br><span class="line">const/high16:<span class="number">32</span>bit只存放高<span class="number">16</span>bit</span><br><span class="line">const-wide vx, lit32 表示将一个 <span class="number">32</span> 位的常量存储到 vx 与 vx+<span class="number">1</span> 两个寄存器中</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>时间戳转换：<a target="_blank" rel="noopener" href="https://www.beijing-time.org/shijianchuo/">在线时间戳转换工具</a></p>
+<p>多处patch可以用正则表达式搜索并修改，比如寄存器不同，可以用<code>.*</code></p>
+<h1 id="自定义-hook"><a href="#自定义-hook" class="headerlink" title="自定义 hook"></a>自定义 hook</h1><h2 id="android-studio-配置"><a href="#android-studio-配置" class="headerlink" title="android studio 配置"></a>android studio 配置</h2><p>用 android studio 开发一个自定义 hook 函数。</p>
+<ol>
+<li><p>Android Studio创建新项目</p>
+</li>
+<li><p>将下载的xposedBridgeApi.jar包拖进libs文件夹</p>
+</li>
+<li><p>右击jar包，选择add as library</p>
+</li>
+<li><p>修改xml文件配置</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">application</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:allowBackup</span>=<span class="string">&quot;true&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:dataExtractionRules</span>=<span class="string">&quot;@xml/data_extraction_rules&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:fullBackupContent</span>=<span class="string">&quot;@xml/backup_rules&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:icon</span>=<span class="string">&quot;@mipmap/ic_launcher&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:label</span>=<span class="string">&quot;@string/app_name&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:roundIcon</span>=<span class="string">&quot;@mipmap/ic_launcher_round&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:supportsRtl</span>=<span class="string">&quot;true&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:theme</span>=<span class="string">&quot;@style/Theme.XposedMyHook&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">tools:targetApi</span>=<span class="string">&quot;31&quot;</span> &gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- 是否是xposed模块，xposed根据这个来判断是否是模块 --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">meta-data</span></span></span><br><span class="line"><span class="tag">            <span class="attr">android:name</span>=<span class="string">&quot;xposedmodule&quot;</span></span></span><br><span class="line"><span class="tag">            <span class="attr">android:value</span>=<span class="string">&quot;true&quot;</span> /&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- 模块描述，显示在xposed模块列表那里第二行 --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">meta-data</span></span></span><br><span class="line"><span class="tag">            <span class="attr">android:name</span>=<span class="string">&quot;xposeddescription&quot;</span></span></span><br><span class="line"><span class="tag">            <span class="attr">android:value</span>=<span class="string">&quot;这是一个Xposed模块&quot;</span> /&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- 最低xposed版本号(lib文件名可知) --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">meta-data</span></span></span><br><span class="line"><span class="tag">            <span class="attr">android:name</span>=<span class="string">&quot;xposedminversion&quot;</span></span></span><br><span class="line"><span class="tag">            <span class="attr">android:value</span>=<span class="string">&quot;89&quot;</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">application</span>&gt;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>修改 <code>build.gradle</code>,将此处修改为 <code>compileOnly</code> 默认的是 <code>implementation</code>, <code>implementation</code> 使用该方式依赖的库将会参与编译和打包<code>compileOnly</code> 只在编译时有效，不会参与打包</p>
+</li>
+<li><p>新建—&gt;Folder—&gt;Assets Folder，创建xposed_init(不要后缀名):只有一行代码，就是说明入口类</p>
+</li>
+<li><p>新建Hook类，实现IXposedHookLoadPackage接口，然后在handleLoadPackage函数内编写Hook逻辑</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> de.robv.android.xposed.IXposedHookLoadPackage; </span><br><span class="line"><span class="keyword">import</span> de.robv.android.xposed.callbacks.XC_LoadPackage;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Hook</span> <span class="keyword">implements</span> <span class="title class_">IXposedHookLoadPackage</span> &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">handleLoadPackage</span><span class="params">(XC_LoadPackage.LoadPackageParam loadPackageParam)</span> <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>写好 hook 函数以后，点击运行，然后在手机上的LSPosed框架里找到我们写好的自定义模块，这里有一个比较奇怪的问题，就是如果我修改了这个hook模块，我必须在LSPosed里把原先的模块卸载掉，然后重新点击AS里的运行，重新进行安装，才能更新修改以后的hook模块。</p>
+<p>出线找不到 activity 的情况需要把 debugConfigrations里的launch options改成nothing</p>
+<h2 id="hook-普通方法"><a href="#hook-普通方法" class="headerlink" title="hook 普通方法"></a>hook 普通方法</h2><p>修改返回值：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">XposedHelpers.findAndHookMethod(<span class="string">&quot;类名&quot;</span>, loadPackageParam.classLoader, <span class="string">&quot;方法名&quot;</span>, String.class, <span class="keyword">new</span> <span class="title class_">XC_MethodHook</span>() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">afterHookedMethod</span><span class="params">(MethodHookParam param)</span> <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line">        <span class="built_in">super</span>.afterHookedMethod(param);</span><br><span class="line">        param.setResult(<span class="string">&quot;自定义返回值&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>修改参数：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">XposedHelpers.findAndHookMethod(<span class="string">&quot;类名&quot;</span>, loadPackageParam.classLoader, <span class="string">&quot;方法名&quot;</span>, String.class, <span class="keyword">new</span> <span class="title class_">XC_MethodHook</span>() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">beforeHookedMethod</span><span class="params">(MethodHookParam param)</span> <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line">        <span class="built_in">super</span>.beforeHookedMethod(param);</span><br><span class="line">        <span class="type">String</span> <span class="variable">a</span> <span class="operator">=</span> <span class="string">&quot;自定义参数&quot;</span>;</span><br><span class="line">        param.args[<span class="number">0</span>] = a;    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h2 id="Hook复杂-amp-自定义参数"><a href="#Hook复杂-amp-自定义参数" class="headerlink" title="Hook复杂&amp;自定义参数"></a>Hook复杂&amp;自定义参数</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">Class</span> <span class="variable">a</span> <span class="operator">=</span> loadPackageParam.classLoader.loadClass(<span class="string">&quot;类名&quot;</span>);</span><br><span class="line">XposedBridge.hookAllMethods(a, <span class="string">&quot;方法名&quot;</span>, <span class="keyword">new</span> <span class="title class_">XC_MethodHook</span>() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">beforeHookedMethod</span><span class="params">(MethodHookParam param)</span> <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line">        <span class="built_in">super</span>.beforeHookedMethod(param);</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h2 id="Hook替换函数"><a href="#Hook替换函数" class="headerlink" title="Hook替换函数"></a>Hook替换函数</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">Class</span> <span class="variable">a</span> <span class="operator">=</span> classLoader.loadClass(<span class="string">&quot;类名&quot;</span>)</span><br><span class="line">XposedBridge.hookAllMethods(a,<span class="string">&quot;方法名&quot;</span>,<span class="keyword">new</span> <span class="title class_">XC_MethodReplacement</span>() &#123;  </span><br><span class="line">    home.php?mod=space&amp;uid=<span class="number">1892347</span>  </span><br><span class="line">    <span class="keyword">protected</span> Object <span class="title function_">replaceHookedMethod</span><span class="params">(MethodHookParam methodHookParam)</span> <span class="keyword">throws</span> Throwable &#123;  </span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;&quot;</span>;  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h2 id="Hook加固通杀"><a href="#Hook加固通杀" class="headerlink" title="Hook加固通杀"></a>Hook加固通杀</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">XposedHelpers.findAndHookMethod(Application.class, <span class="string">&quot;attach&quot;</span>, Context.class, <span class="keyword">new</span> <span class="title class_">XC_MethodHook</span>() &#123;  </span><br><span class="line">    <span class="meta">@Override</span>  </span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">afterHookedMethod</span><span class="params">(MethodHookParam param)</span> <span class="keyword">throws</span> Throwable &#123;  </span><br><span class="line">        <span class="type">Context</span> <span class="variable">context</span> <span class="operator">=</span> (Context) param.args[<span class="number">0</span>];  </span><br><span class="line">        <span class="type">ClassLoader</span> <span class="variable">classLoader</span> <span class="operator">=</span> context.getClassLoader();</span><br><span class="line">        <span class="comment">//hook逻辑在这里面写  </span></span><br><span class="line">    &#125;  </span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h2 id="Hook-变量"><a href="#Hook-变量" class="headerlink" title="Hook 变量"></a>Hook 变量</h2><p>静态变量：</p>
+<p>如果要hook一个String，就用 <code>setStaticObjectField</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="type">Class</span> <span class="variable">clazz</span> <span class="operator">=</span> XposedHelpers.findClass(<span class="string">&quot;类名&quot;</span>, classLoader);  </span><br><span class="line">XposedHelpers.setStaticIntField(clazz, <span class="string">&quot;变量名&quot;</span>, <span class="number">999</span>);</span><br></pre></td></tr></table></figure>
+<p>实例变量：</p>
+<p>先获取字节码，然后在构造函数以后进行hook</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="type">Class</span> <span class="variable">clazz</span> <span class="operator">=</span> XposedHelpers.findClass(<span class="string">&quot;类名&quot;</span>, classLoader);  </span><br><span class="line">XposedBridge.hookAllConstructors(clazz, <span class="keyword">new</span> <span class="title class_">XC_MethodHook</span>() &#123;  </span><br><span class="line">     <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">afterHookedMethod</span><span class="params">(MethodHookParam param)</span> <span class="keyword">throws</span> Throwable &#123;  </span><br><span class="line">        <span class="built_in">super</span>.afterHookedMethod(param);  </span><br><span class="line">        <span class="comment">//param.thisObject获取当前所属的对象</span></span><br><span class="line">        <span class="type">Object</span> <span class="variable">ob</span> <span class="operator">=</span> param.thisObject;  </span><br><span class="line">        XposedHelpers.setIntField(ob,<span class="string">&quot;变量名&quot;</span>,<span class="number">9999</span>);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h2 id="Hook构造函数"><a href="#Hook构造函数" class="headerlink" title="Hook构造函数"></a>Hook构造函数</h2></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://example.com">EPs1l0h</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://example.com/2024/03/22/%E5%AE%89%E5%8D%93%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/">https://example.com/2024/03/22/%E5%AE%89%E5%8D%93%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://example.com" target="_blank">EPs1l0h's Castle</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"></div><div class="post_share"><div class="social-share" data-image="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechat.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/2024/02/19/BeginCTF2024-re-wp/"><img class="next-cover" src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover2.jpg?raw=true" onerror="onerror=null;src='/img/404.gif'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">BeginCTF2024-re-wp</div></div></a></div></nav><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">EPs1l0h</div><div class="author-info__description"></div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">45</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/EPs1l0h"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">Spears shall be shaken! Shields shall be splintered! A sword day! A red day! Ere the sun rises!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE"><span class="toc-number">1.</span> <span class="toc-text">环境配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E4%BA%9B%E5%B7%A5%E5%85%B7"><span class="toc-number">2.</span> <span class="toc-text">一些工具</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%89%E5%8D%93%E5%8A%A8%E8%B0%83"><span class="toc-number">3.</span> <span class="toc-text">安卓动调</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AD%BE%E5%90%8D%E6%A0%A1%E9%AA%8C%E5%AF%B9%E6%8A%97"><span class="toc-number">4.</span> <span class="toc-text">签名校验对抗</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E4%B8%80"><span class="toc-number">4.1.</span> <span class="toc-text">方法一</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E4%BA%8C"><span class="toc-number">4.2.</span> <span class="toc-text">方法二</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E4%B8%89"><span class="toc-number">4.3.</span> <span class="toc-text">方法三</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E5%9B%9B"><span class="toc-number">4.4.</span> <span class="toc-text">方法四</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%89%8B%E5%8A%A8%E5%AE%9E%E7%8E%B0PM%E4%BB%A3%E7%90%86"><span class="toc-number">5.</span> <span class="toc-text">手动实现PM代理</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#IO-%E9%87%8D%E5%AE%9A%E5%90%91"><span class="toc-number">6.</span> <span class="toc-text">IO 重定向</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%B6%E4%BB%96%E6%A3%80%E6%B5%8B%E6%89%8B%E6%AE%B5"><span class="toc-number">7.</span> <span class="toc-text">其他检测手段</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#smail-%E5%8F%98%E9%87%8F%E8%B5%8B%E5%80%BC"><span class="toc-number">8.</span> <span class="toc-text">smail 变量赋值</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89-hook"><span class="toc-number">9.</span> <span class="toc-text">自定义 hook</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#android-studio-%E9%85%8D%E7%BD%AE"><span class="toc-number">9.1.</span> <span class="toc-text">android studio 配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#hook-%E6%99%AE%E9%80%9A%E6%96%B9%E6%B3%95"><span class="toc-number">9.2.</span> <span class="toc-text">hook 普通方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Hook%E5%A4%8D%E6%9D%82-amp-%E8%87%AA%E5%AE%9A%E4%B9%89%E5%8F%82%E6%95%B0"><span class="toc-number">9.3.</span> <span class="toc-text">Hook复杂&amp;自定义参数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Hook%E6%9B%BF%E6%8D%A2%E5%87%BD%E6%95%B0"><span class="toc-number">9.4.</span> <span class="toc-text">Hook替换函数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Hook%E5%8A%A0%E5%9B%BA%E9%80%9A%E6%9D%80"><span class="toc-number">9.5.</span> <span class="toc-text">Hook加固通杀</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Hook-%E5%8F%98%E9%87%8F"><span class="toc-number">9.6.</span> <span class="toc-text">Hook 变量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Hook%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0"><span class="toc-number">9.7.</span> <span class="toc-text">Hook构造函数</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/03/22/%E5%AE%89%E5%8D%93%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/" title="安卓逆向初探"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null;this.src='/img/404.gif'" alt="安卓逆向初探"/></a><div class="content"><a class="title" href="/2024/03/22/%E5%AE%89%E5%8D%93%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/" title="安卓逆向初探">安卓逆向初探</a><time datetime="2024-03-22T05:25:14.000Z" title="发表于 2024-03-22 13:25:14">2024-03-22</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/02/19/BeginCTF2024-re-wp/" title="BeginCTF2024-re-wp"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover2.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="BeginCTF2024-re-wp"/></a><div class="content"><a class="title" href="/2024/02/19/BeginCTF2024-re-wp/" title="BeginCTF2024-re-wp">BeginCTF2024-re-wp</a><time datetime="2024-02-19T06:55:40.000Z" title="发表于 2024-02-19 14:55:40">2024-02-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/02/12/L3HCTF-2024-%E9%83%A8%E5%88%86%E5%A4%8D%E7%8E%B0/" title="L3HCTF-2024-部分复现"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover3.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="L3HCTF-2024-部分复现"/></a><div class="content"><a class="title" href="/2024/02/12/L3HCTF-2024-%E9%83%A8%E5%88%86%E5%A4%8D%E7%8E%B0/" title="L3HCTF-2024-部分复现">L3HCTF-2024-部分复现</a><time datetime="2024-02-12T07:03:06.000Z" title="发表于 2024-02-12 15:03:06">2024-02-12</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2023/10/05/%E8%93%9D%E5%B8%BD%E6%9D%AF2022%E5%8D%8A%E5%86%B3%E8%B5%9BWP%E2%80%94%E2%80%94%E8%A6%81%E8%93%9D%E5%B8%BD%E4%B8%8D%E8%A6%81%E7%BB%BF%E5%B8%BD/" title="蓝帽杯(取证杯）2022半决赛WP"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover2.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="蓝帽杯(取证杯）2022半决赛WP"/></a><div class="content"><a class="title" href="/2023/10/05/%E8%93%9D%E5%B8%BD%E6%9D%AF2022%E5%8D%8A%E5%86%B3%E8%B5%9BWP%E2%80%94%E2%80%94%E8%A6%81%E8%93%9D%E5%B8%BD%E4%B8%8D%E8%A6%81%E7%BB%BF%E5%B8%BD/" title="蓝帽杯(取证杯）2022半决赛WP">蓝帽杯(取证杯）2022半决赛WP</a><time datetime="2023-10-05T08:20:32.725Z" title="发表于 2023-10-05 16:20:32">2023-10-05</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2023/10/05/%E8%93%9D%E5%B8%BD%E6%9D%AF2022%E5%88%9D%E8%B5%9B%E5%A4%8D%E7%8E%B0/" title="蓝帽杯(电子取证杯)2022赛题复现"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover3.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="蓝帽杯(电子取证杯)2022赛题复现"/></a><div class="content"><a class="title" href="/2023/10/05/%E8%93%9D%E5%B8%BD%E6%9D%AF2022%E5%88%9D%E8%B5%9B%E5%A4%8D%E7%8E%B0/" title="蓝帽杯(电子取证杯)2022赛题复现">蓝帽杯(电子取证杯)2022赛题复现</a><time datetime="2023-10-05T08:20:32.719Z" title="发表于 2023-10-05 16:20:32">2023-10-05</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2024 By EPs1l0h</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.min.js"></script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    tex: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]],
+      tags: 'ams'
+    },
+    chtml: {
+      scale: 1.2
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, ''],
+        insertScript: [200, () => {
+          document.querySelectorAll('mjx-container:not\([display]\)').forEach(node => {
+            const target = node.parentNode
+            if (target.nodeName.toLowerCase() === 'li') {
+              target.parentNode.classList.add('has-jax')
+            } else {
+              target.classList.add('has-jax')
+            }
+          });
+        }, '', false]
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typeset()
+}</script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://example.com/2024/03/22/%E5%AE%89%E5%8D%93%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/'
+    this.page.identifier = '/2024/03/22/%E5%AE%89%E5%8D%93%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/'
+    this.page.title = '安卓逆向初探'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+
+  document.getElementById('darkmode').addEventListener('click', () => {
+    setTimeout(() => window.disqusReset(), 200)
+  })
+}
+
+if ('Disqus' === 'Disqus' || !false) {
+  if (false) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script></div><div class="aplayer no-destroy" data-id="2981528901" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="true"> </div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  typeof preloader === 'object' && preloader.initLoading()
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
