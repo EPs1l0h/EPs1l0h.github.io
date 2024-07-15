@@ -1,0 +1,6 @@
+.aplayer {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  --theme-color: #2980b9;
+}
