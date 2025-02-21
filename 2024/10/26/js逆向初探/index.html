@@ -1,0 +1,506 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>js逆向初探 | EPs1l0h's Castle</title><meta name="author" content="EPs1l0h"><meta name="copyright" content="EPs1l0h"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="JS 基础瞎几把写就得，记录一下特性即可。  万物皆对象，了解一些内置函数和内置属性，比如name, arguments等  var 有变量提升，let没有，闭包概念  匿名方法 const 匿名方法 &#x3D; (functinn() &amp;#123;&amp;#125;)  JS是弱类型语言  自主垃圾回收，引用计数  原型对象和实例对象，构造函数，打印原型对象得.prototype,原型对象和实例对象下面都有一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="js逆向初探">
+<meta property="og:url" content="https://example.com/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/index.html">
+<meta property="og:site_name" content="EPs1l0h&#39;s Castle">
+<meta property="og:description" content="JS 基础瞎几把写就得，记录一下特性即可。  万物皆对象，了解一些内置函数和内置属性，比如name, arguments等  var 有变量提升，let没有，闭包概念  匿名方法 const 匿名方法 &#x3D; (functinn() &amp;#123;&amp;#125;)  JS是弱类型语言  自主垃圾回收，引用计数  原型对象和实例对象，构造函数，打印原型对象得.prototype,原型对象和实例对象下面都有一">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true">
+<meta property="article:published_time" content="2024-10-26T06:57:40.000Z">
+<meta property="article:modified_time" content="2024-12-22T09:28:19.647Z">
+<meta property="article:author" content="EPs1l0h">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://example.com/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'js逆向初探',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-12-22 17:28:19'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="source/css/aplayer_custom.css"><meta name="generator" content="Hexo 6.2.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">60</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> home</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/writeup"><i class="fa-fw fas fa-folder-open"></i><span> writeup</span></a></li><li><a class="site-page child" href="/categories/notes"><i class="fa-fw fas fa-folder-open"></i><span> notes</span></a></li><li><a class="site-page child" href="/categories/jottings"><i class="fa-fw fas fa-folder-open"></i><span> jottings</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-link"></i><span> Link</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Here-is-SG"><i class="fa-fw fas fa-link"></i><span> iPlayForSG</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://jameshoi.github.io/"><i class="fa-fw fas fa-link"></i><span> jameshoi</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Only-xiaoxiao"><i class="fa-fw fas fa-link"></i><span> xiaoxiao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Clovershrub"><i class="fa-fw fas fa-link"></i><span> Clovershrub</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://blog.gaoyucan.site/"><i class="fa-fw fas fa-link"></i><span> gaoyucan</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://demoyao100.github.io/"><i class="fa-fw fas fa-link"></i><span> moyao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://lantern.cool/"><i class="fa-fw fas fa-link"></i><span> lantern</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://mapleqian.github.io/"><i class="fa-fw fas fa-link"></i><span> Serendy</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> about</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">EPs1l0h's Castle</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> home</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/writeup"><i class="fa-fw fas fa-folder-open"></i><span> writeup</span></a></li><li><a class="site-page child" href="/categories/notes"><i class="fa-fw fas fa-folder-open"></i><span> notes</span></a></li><li><a class="site-page child" href="/categories/jottings"><i class="fa-fw fas fa-folder-open"></i><span> jottings</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-link"></i><span> Link</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Here-is-SG"><i class="fa-fw fas fa-link"></i><span> iPlayForSG</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://jameshoi.github.io/"><i class="fa-fw fas fa-link"></i><span> jameshoi</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Only-xiaoxiao"><i class="fa-fw fas fa-link"></i><span> xiaoxiao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Clovershrub"><i class="fa-fw fas fa-link"></i><span> Clovershrub</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://blog.gaoyucan.site/"><i class="fa-fw fas fa-link"></i><span> gaoyucan</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://demoyao100.github.io/"><i class="fa-fw fas fa-link"></i><span> moyao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://lantern.cool/"><i class="fa-fw fas fa-link"></i><span> lantern</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://mapleqian.github.io/"><i class="fa-fw fas fa-link"></i><span> Serendy</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> about</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">js逆向初探</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-10-26T06:57:40.000Z" title="发表于 2024-10-26 14:57:40">2024-10-26</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-12-22T09:28:19.647Z" title="更新于 2024-12-22 17:28:19">2024-12-22</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/notes/">notes</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="js逆向初探"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="JS-基础"><a href="#JS-基础" class="headerlink" title="JS 基础"></a>JS 基础</h1><p>瞎几把写就得，记录一下特性即可。</p>
+<ol>
+<li><p>万物皆对象，了解一些内置函数和内置属性，比如<code>name, arguments</code>等</p>
+</li>
+<li><p>var 有变量提升，let没有，闭包概念</p>
+</li>
+<li><p>匿名方法 <code>const 匿名方法 = (functinn() &#123;&#125;)</code></p>
+</li>
+<li><p>JS是弱类型语言</p>
+</li>
+<li><p>自主垃圾回收，引用计数</p>
+</li>
+<li><p>原型对象和实例对象，构造函数，打印原型对象得<code>.prototype</code>,原型对象和实例对象下面都有一个 <code>__proto__</code>属性，指向了其原型对象</p>
+</li>
+<li><p>原型对象和实例对象的 <code>this</code> 指向是不同的，实例对象：谁调用的就是谁(比如 <code>window</code>)，原型对象：指向的是原型对象的实例</p>
+</li>
+<li><p>一个函数被new出来就变成了一个构造函数&amp;原型对象，构造函数的属性和原型对象的属性不同</p>
+</li>
+<li><p>原型链：对于实例而言<code>a.__proto__</code> 指向其原型对象，对于原型对象而言指向的其父原型对象，直到  <code>Object</code> 原型对象</p>
+</li>
+<li><p>一个例子：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">pro</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">a</span> = <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line">pro.<span class="property">a</span> = <span class="number">2</span>;</span><br><span class="line"><span class="keyword">var</span> aa = <span class="keyword">new</span> <span class="title function_">pro</span>(); <span class="comment">// new 出来一个 pro 对象，aa是实例，a是属性</span></span><br><span class="line"><span class="comment">// aa.__proto__ 指向pro对象，pro.prototype指向的也是pro对象，aa.__proto__.__proto__指向的是pro对象的父亲 Object 对象</span></span><br><span class="line"><span class="comment">// 如果要往 pro 对象里添加属性，可以用 pro.prototype.b = 2 或者 aa.__proto__.b = 2</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>作用域：全局作用域、语句作用域（比如括号里面的）、块作用域（比如大括号中间的）</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">function</span> <span class="title function_">xx</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">var</span> a = <span class="number">2</span>;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(a); <span class="comment">// 输出的是 2，先从块作用域找，再从语句作用域找，再从全局找</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">全局作用域  &#123;</span></span><br><span class="line"><span class="comment">	a = 1</span></span><br><span class="line"><span class="comment">        语句作用域 &#123;</span></span><br><span class="line"><span class="comment">            块作用域 &#123;</span></span><br><span class="line"><span class="comment">            a = 2</span></span><br><span class="line"><span class="comment">            console.log()</span></span><br><span class="line"><span class="comment">        &#125;</span></span><br><span class="line"><span class="comment">    &#125;</span></span><br><span class="line"><span class="comment">&#125;</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>Object.defineProperty</code> 在对象上定义一个新属性或修改一个对象的现有属性，并返回该对象，用于 hook。有三个参数 <code>obj, prop, descriptor</code>，分别是对象，定义或修改的属性的属性值<code>symbol</code>，要定义或修改的属性的描述符（比如，可不可以被修改，可不可以被删除等等）</p>
+</li>
+<li><p>可以通过 <code>delete aa.a</code> 删除 aa 实例的 a 属性，但是<code>Object.freeze(aa)</code>可以冻结，不能修改和删除属性，<code>Object.seal(aa)</code>不能删除属性但是可以改</p>
+</li>
+<li><p><code>Object.prototype.__defineGetter__</code>，hook getter方法，比如 <code>aa.__defineGetter__(&quot;a&quot;, function()&#123;console.log(&quot;1&quot;)&#125;);</code>就是只要 <code>aa</code> 实例里的 <code>a</code> 属性被访问，就会打印 <code>1</code></p>
+</li>
+<li><p>一个花指令的例子：<code>(0, a.request)</code>，这是一个函数调用，括号会返回最后一个元素的值，也就是这句话等价于 <code>a.request</code></p>
+</li>
+</ol>
+<h1 id="工具使用"><a href="#工具使用" class="headerlink" title="工具使用"></a>工具使用</h1><p>JS 逆向流程：<code>抓包 -&gt; 调试 -&gt; 脱离浏览器环境（V8, node.js, pyv8等） -&gt;</code> </p>
+<h2 id="fiddler配置"><a href="#fiddler配置" class="headerlink" title="fiddler配置"></a>fiddler配置</h2><p>版本： v5.0.20204.45441 for .NET 4.6.1 Built: 2020年11月3日</p>
+<ol>
+<li><p>Tools -&gt; HTTPS -&gt; 全勾选 -&gt; 安装证书 -&gt; 管理员权限重启 fiddler</p>
+</li>
+<li><p>设置自定义端口号</p>
+</li>
+<li><p>用浏览器插件设置本地代理和端口号</p>
+</li>
+<li><p>修改 protocols 为 <code>&lt;client&gt;; ssl2; ssl3; tls1.0; tls1.1; tls1.2</code></p>
+</li>
+<li><p>打开 Decode 快速解压缩</p>
+</li>
+<li><p>断点：捕获数据，Inspectors：放行数据</p>
+</li>
+<li><p>自动断点，在 request 之前/之后</p>
+</li>
+<li><p>修改 User Agent 地址</p>
+</li>
+<li><p>编程猫插件配置</p>
+</li>
+<li><p>编程猫插件注入 hook：开启，并删除掉地址就是匹配所有 URL。只能hook全局，局部变量是没法 hook 的</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//当前版本hook工具只支持Content-Type为html的自动hook</span></span><br><span class="line"><span class="comment">//下面是一个示例:这个示例演示了hook全局的cookie设置点</span></span><br><span class="line">(<span class="keyword">function</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="comment">//严谨模式 检查所有错误</span></span><br><span class="line">    <span class="string">&#x27;use strict&#x27;</span>;</span><br><span class="line">    <span class="comment">//document 为要hook的对象   这里是hook的cookie</span></span><br><span class="line">	<span class="keyword">var</span> cookieTemp = <span class="string">&quot;&quot;</span>;</span><br><span class="line">    <span class="title class_">Object</span>.<span class="title function_">defineProperty</span>(<span class="variable language_">document</span>, <span class="string">&#x27;cookie&#x27;</span>, &#123;</span><br><span class="line">		<span class="comment">//hook set方法也就是赋值的方法 </span></span><br><span class="line">		<span class="attr">set</span>: <span class="keyword">function</span>(<span class="params">val</span>) &#123;</span><br><span class="line">				<span class="comment">//这样就可以快速给下面这个代码行下断点</span></span><br><span class="line">				<span class="comment">//从而快速定位设置cookie的代码</span></span><br><span class="line">				<span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;Hook捕获到cookie设置-&gt;&#x27;</span>, val);</span><br><span class="line">				cookieTemp = val;</span><br><span class="line">				<span class="keyword">return</span> val;</span><br><span class="line">		&#125;,</span><br><span class="line">		<span class="comment">//hook get方法也就是取值的方法 </span></span><br><span class="line">		<span class="attr">get</span>: <span class="keyword">function</span>(<span class="params"></span>)</span><br><span class="line">		&#123;</span><br><span class="line">			<span class="keyword">return</span> cookieTemp;</span><br><span class="line">		&#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;)();</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h2 id="浏览器工具"><a href="#浏览器工具" class="headerlink" title="浏览器工具"></a>浏览器工具</h2><ol>
+<li><p>下断点</p>
+</li>
+<li><p>复制 JS 路径并直接修改本地的值</p>
+</li>
+<li><p>Event Listeners：绑定的事件列表，且可以筛选特定按钮的绑定事件</p>
+</li>
+<li><p>手机模式不是真的手机，没有手机的环境，浏览器的环境有 window，UA，Cookie等</p>
+</li>
+<li><p>微信 UA ：可以通过微信抓包获取</p>
+<p><img src="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/Blog\source\_posts\js逆向初探\QQ_1730388027841.png" alt="QQ_1730388027841"></p>
+</li>
+<li><p>F1：设置面板。取消Javascript source maps 功能（可能导致断不上） ，了解一下 webpack；NetWork：禁止输出，禁止清空缓存；NetWork Throttling Profiles：控制网速</p>
+</li>
+<li><p>XHR：XMLHttpRequest，JS 控制的一种发包方式（只能筛选JS发的包）</p>
+</li>
+<li><p>Performance：实时跟踪翻页时发送的包，以及时序，此外还能看到别的线程，和事件调用等（信息量有点大emm）</p>
+<p><img src="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/Blog\source\_posts\js逆向初探\QQ_1730389633044.png" alt="QQ_1730389633044"></p>
+</li>
+<li><p>Application：网站储存的数据总览，Cookies 是本地文件，一般在缓存目录下，还有session Storage, LocalStorage, indexDB等</p>
+</li>
+<li><p>Security：是否支持 HTTPS 等</p>
+</li>
+<li><p>Sources：有个 Snippets ，临时脚本/片段</p>
+</li>
+<li><p>还有一堆功能藏在这三个点里，比如 Network request blocking等</p>
+<p><img src="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/Blog\source\_posts\js逆向初探\image-20241031235241084.png" alt="image-20241031235241084"></p>
+</li>
+<li><p>断点：</p>
+<ul>
+<li>F9能进异步，F7不能</li>
+<li>忽略断点按钮没法忽略DOM断点和异常断点</li>
+<li>异常断点：try catch</li>
+<li>DOM断点：页面刷新的时候在HTML上下断</li>
+<li>全局事件断点（生命周期断点）：比如在加载的时候下断，滚动条下断，鼠标事件下断，XHR下断等</li>
+<li>除了 XHR，还有 jsonp 的请求，请求后会返回的response会立即执行，且浏览器自己处理（XHR：用户请求用户处理，jsonp：用户请求浏览器处理）</li>
+<li>代码行断点：跳过当前断点，编辑断点（条件断点：过滤断点，写上条件，让其在我们想要其断的时候再断，否则跳过）</li>
+<li>debugger：直接打上条件断点 false，其就不会执行了</li>
+<li>watch：监控变量的值，可以实时打印其值</li>
+<li>方法栈：先运行的在下面，当前的在最上面。可以看出方法名，当前的代码行数，一些特殊的方法（比如定时器，XHR等方法），可以看出调用关系</li>
+<li>作用域：Local（本地作用域），Closure（上层作用域，可能多个嵌套），Global（全局作用域），找一个变量：从当前开始找，然后一层一层网上找，直到全局</li>
+<li>智能提示：会提示到当前的方法</li>
+<li>下断点：方法开始，方法结束，想要的数据</li>
+<li><code>send, ajax</code> 是分装发 XHR，直接找他俩上面的栈帧</li>
+<li>本地替换：<ol>
+<li>浏览器本地替换</li>
+<li>DF本地替换，如果有个URL地址其 <code>?</code> 后面是个随机数，可以用FD替换，找到FD的 <code>Auto Responser</code>，也可以正则匹配（有个test按钮，点一下把想要匹配的目标URL贴进去就可以看出是否匹配成功），也可以自己写插件。如果替换的是 JS 文件，本地文件的后缀也需要是 JS 文件</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>反调试：</p>
+<ul>
+<li><p><a target="_blank" rel="noopener" href="https://www.jsjiami.com/jsjiami.v6.html">https://www.jsjiami.com/jsjiami.v6.html</a></p>
+</li>
+<li><p>禁止控制台调试</p>
+<p><img src="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/Blog\source\_posts\js逆向初探\image-20241106171015782.png" alt="image-20241106171015782"></p>
+</li>
+<li><p>写一个demo（比如一行代码 <code>window.ep = 1;</code>放到一个新页面的 snippet中</p>
+<ol>
+<li><p>运行，发现有反调试</p>
+<p><img src="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/Blog\source\_posts\js逆向初探\image-20241106171142545.png" alt="image-20241106171142545"></p>
+</li>
+<li><p>解决手动 debugger：直接本地替换进行修改，把debugger删掉即可</p>
+</li>
+<li><p>解决代码格式化检测：点击最高配置发现检测是有用的，格式化再运行会直接卡死</p>
+<p><img src="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/Blog\source\_posts\js逆向初探\image-20241106172255931.png" alt="image-20241106172255931"></p>
+<p>过检测：一般格式化检测利用的是这个原理：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">xx</span>(<span class="params"></span>) &#123;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">xx.<span class="title function_">toString</span>() <span class="comment">// 或者 xx + &quot;&quot;</span></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">这种就会返回一个字符串，格式化由于空格，换行符的问题会导致长度不一致，这样用正则匹配一个未格式化的String，比如 funtion xx()&#123;&#125;，如果代码格式化了，就肯定匹配不成功</span></span><br><span class="line"><span class="comment">那么过检测的方法就是先寻找特征</span></span><br><span class="line"><span class="comment">RegExp: 正则匹配</span></span><br><span class="line"><span class="comment">test: 正则匹配函数</span></span><br><span class="line"><span class="comment">toString: 字符串转化</span></span><br><span class="line"><span class="comment">然后下断看看会不会卡死</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+<p><img src="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/Blog\source\_posts\js逆向初探\image-20241106174900860.png" alt="image-20241106174900860"></p>
+<p>下面就是一个典型的格式化检测代码：</p>
+<p><img src="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/Blog\source\_posts\js逆向初探\image-20241106173311724.png" alt="image-20241106173311724"></p>
+<p><code>removeCookie</code> 这个函数，先 <code>toString</code> ，再 <code>test</code> 和正则进行比较，如果发现其格式化了就返回一个检测值。</p>
+<p>那么一个有效的过检测手段就是先格式化，再把 <code>return</code> 的结果直接取反即可</p>
+<p><img src="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/Blog\source\_posts\js逆向初探\image-20241106173507125.png" alt="image-20241106173507125"></p>
+<p>第二种方法是 hook：对 <code>toString</code> 方法进行替换</p>
+<p><img src="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/Blog\source\_posts\js逆向初探\image-20241106175209522.png" alt="image-20241106175209522"></p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">_0x52e0da[<span class="string">&#x27;removeCookie&#x27;</span>][<span class="string">&#x27;toString&#x27;</span>] = <span class="keyword">function</span>(<span class="params"></span>) &#123;<span class="keyword">return</span> <span class="string">&quot;function()&#123;return &#x27;dev&#x27;;&#125;&quot;</span>&#125;</span><br></pre></td></tr></table></figure>
+<p><img src="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/Blog\source\_posts\js逆向初探\image-20241106175342847.png" alt="image-20241106175342847"></p>
+<p>当然也可以 hook 正则的 <code>test</code> 方法</p>
+<p>一个友好HOOK步骤：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 保存原函数</span></span><br><span class="line"><span class="title class_">RegExp</span>.<span class="property"><span class="keyword">prototype</span></span>.<span class="property">test_</span> = <span class="title class_">RegExp</span>.<span class="property"><span class="keyword">prototype</span></span>.<span class="property">test</span>;</span><br><span class="line"><span class="comment">// 替换原函数</span></span><br><span class="line"><span class="title class_">RegExp</span>.<span class="property"><span class="keyword">prototype</span></span>.<span class="property">test</span> = <span class="keyword">function</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="comment">// 执行原函数，用 apply 执行</span></span><br><span class="line">    <span class="keyword">var</span> ret = <span class="title class_">RegExp</span>.<span class="property"><span class="keyword">prototype</span></span>.<span class="property">test_</span>.<span class="title function_">apply</span>(<span class="variable language_">this</span>, <span class="variable language_">arguments</span>);</span><br><span class="line">    <span class="keyword">return</span> !ret;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 保护 toString (如果检测了就保护)</span></span><br><span class="line"><span class="title class_">RegExp</span>.<span class="property"><span class="keyword">prototype</span></span>.<span class="property">test_</span>.<span class="property">toString</span> = <span class="title class_">RegExp</span>.<span class="property"><span class="keyword">prototype</span></span>.<span class="property">test</span>.<span class="property">toString</span>;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>第二种反调试：进虚拟机 VM</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1. eval</span></span><br><span class="line"><span class="keyword">var</span> a = <span class="built_in">eval</span>(<span class="string">&quot;debugger;function xx()&#123;return 2;&#125; xx();&quot;</span>);</span><br></pre></td></tr></table></figure>
+<p><img src="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/Blog\source\_posts\js逆向初探\QQ_1731078633806.png" alt="QQ_1731078633806"></p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 2. Function 包裹语句</span></span><br><span class="line"><span class="keyword">var</span> a = <span class="title class_">Function</span>(<span class="string">&quot;console.log(1)&quot;</span>);</span><br><span class="line"><span class="comment">// 3. Blob 内存对象</span></span><br></pre></td></tr></table></figure>
+<p>怎么过 Function：hook掉即可，Function的参数就是要执行的语句，直接把里面的debugger删掉即可。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">Function</span>.<span class="property"><span class="keyword">prototype</span></span>.<span class="property">constructor_</span> = <span class="title class_">Function</span>.<span class="property"><span class="keyword">prototype</span></span>.<span class="property">constructor</span>;</span><br><span class="line"><span class="title class_">Function</span>.<span class="property"><span class="keyword">prototype</span></span>.<span class="property">constructor</span> = <span class="keyword">function</span>(<span class="params">a</span>) &#123;</span><br><span class="line">    a = a.<span class="title function_">replace</span>(<span class="string">&quot;debugger&quot;</span>, <span class="string">&quot;&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="title class_">Function</span>.<span class="property"><span class="keyword">prototype</span></span>.<span class="title function_">constructor_</span>(a);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>对于一个登录页面来说，我们需要找到用户名，密码，加密逻辑</p>
+<ul>
+<li>如果是 document 类型，就复制这个 API 的 URL 然后直接搜索，大概率能找到逻辑</li>
+<li>如果是 xhr ，就直接从network里点击该包后的交叉引用，如果是 ajax，就找到其 caller，大概率能找到发包时的内容，再往上进行交叉引用，或查看栈帧找到其 caller 即可</li>
+<li>如果是 jsonp，一般会有个回调函数，也是一样，找到其caller即可</li>
+</ul>
+</li>
+<li><p>异步调试：涉及到 promise</p>
+<ol>
+<li><p>Promise标准：</p>
+<ul>
+<li><p>拥有一个then方法</p>
+</li>
+<li><p>fulfill 成功时的操作，即resolve</p>
+</li>
+<li><p>reject 失败时的操作</p>
+</li>
+<li><p>padding 等待</p>
+</li>
+</ul>
+</li>
+</ol>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 有一个线程</span></span><br><span class="line">	<span class="keyword">var</span> a = []; <span class="comment">//定义一个数组，这个数组里放的都是方法 </span></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">Promise</span>(<span class="params">p</span>) &#123;</span><br><span class="line">    a.<span class="title function_">push</span>(p);</span><br><span class="line">    <span class="keyword">while</span>(<span class="literal">true</span>) &#123;</span><br><span class="line">      <span class="keyword">for</span>(<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; a.<span class="property">length</span>; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span>(a[i].<span class="property">z</span> == -<span class="number">1</span>) &#123;</span><br><span class="line">          xxx</span><br><span class="line">        &#125; elsec <span class="keyword">if</span>(a[i].<span class="property">z</span> == <span class="string">&quot;pending&quot;</span>) &#123;</span><br><span class="line">          xxx</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">	<span class="keyword">new</span> <span class="title class_">Promise</span>(); <span class="comment">// 想要给 a 数组添加方法就要 new 这个对象，此时 执行构造方法，就是 Promise 方法，会立即执行</span></span><br><span class="line"><span class="comment">// 异步始终是在一个线程中的</span></span><br></pre></td></tr></table></figure>
+<p>一个例子</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> p = <span class="keyword">new</span> <span class="title class_">Promise</span>(<span class="function">(<span class="params">resolve, reject</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">setTimeout</span>(<span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">        <span class="comment">// 用于模拟异步操作成功或失败</span></span><br><span class="line">        flag = <span class="number">1</span></span><br><span class="line">        <span class="keyword">if</span> (flag) &#123;</span><br><span class="line">            <span class="title function_">resolve</span>(<span class="string">&#x27;异步操作成功啦~&#x27;</span>)</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="title function_">reject</span>(<span class="string">&quot;异步操作失败啦~&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;, <span class="number">2000</span>)</span><br><span class="line">&#125;)</span><br><span class="line">          </span><br><span class="line">p.<span class="title function_">then</span>(<span class="function"><span class="params">value</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(value);</span><br><span class="line">&#125;, <span class="function"><span class="params">reason</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(reason);</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p><code>function.prototype.apply</code>：调用一个具有给定 <code>this</code> 值的函数，以及以一个数组或类数组对象的形式提供的参数，<code>o.apply(this, arguments ) 等价于  this.o(arguments)</code>，就是给 this 这个对象 bind 了一个方法 o 传入 argume nts</p>
+</li>
+<li><p>一般会 <code>new Promise(function()&#123;&#125;)</code>，重点看里面的方法 </p>
+</li>
+<li><p>控制流平坦化：<code>wrap</code>，<code>u.prev = u.next</code>，u.sent 等价于其上一个方法的返回值，方法就是找 <code>u.next</code> 对应的前驱，把该代码块复制出来，去掉控制执行流的代码，再把u.sent 替换成上一个方法的返回值即可</p>
+</li>
+<li><p>异步封装：</p>
+<p>Callback 栈帧前三个一般都是发包的请求，然后看一些特殊的 js 代码</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span>(b.<span class="property">length</span>) &#123;</span><br><span class="line">  a.<span class="title function_">then</span>(b.<span class="title function_">shift</span>(), b.<span class="title function_">shift</span>());</span><br><span class="line">&#125; <span class="comment">// shift可以理解为出栈 pop</span></span><br><span class="line"><span class="comment">// then 有两个参数，一个是成功回调一个是失败回调</span></span><br><span class="line"><span class="comment">// b 是一个数组，看其第一个元素即可</span></span><br><span class="line"><span class="comment">// 下断点在b.shift前面下</span></span><br><span class="line"><span class="comment">// 只有在异步中加密的才需要跟，在异步前后加密的可以直接看栈帧，如果看异步的时候发现执行时已经加密了，那就不用看异步了</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><p>HOOK：油猴插件/fiddler插件</p>
+<p>油猴插件：原理是利用浏览器自带的API，直接调用这些API进行 HOOK，没有逃离浏览器的框架，不足是即使把运行时期改称了 document start，也可能 hook 不到（比如一些动态加载到js，在document刷新之前就会执行，这就hook不到），而且其会插入一段js代码，可能会被检测到</p>
+<p><img src="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/Blog\source\_posts\js逆向初探\image-20241222172814579.png" alt="image-20241222172814579"></p>
+<p>编程猫fiddler插件：基于FD代理，其脱离浏览器而存在，不被浏览器感知</p>
+<p>hook 主要用于定位逻辑，常见的 hook 是对 LocalStorage的 hook</p>
+<p>本地替换：override随意修改本地代码，浏览器自带的功能，但是这种方法会被检测，比如添加随机数校验，或者检查代码是否格式化，还有URL地址改变也会被识别成不同的文件</p>
+</li>
+<li><p>反调试</p>
+<p>禁止控制台调试：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1.检测控制台调试，用 while 或者定时器</span></span><br><span class="line"><span class="built_in">setInterval</span>(<span class="string">&quot;console.clear()&quot;</span>, <span class="number">1000</span>);</span><br><span class="line"><span class="comment">// 修复：禁用console.clear，有个浏览器选项勾上即可</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 2.替换 console.log 为空</span></span><br><span class="line"><span class="variable language_">console</span>.<span class="property">log</span> = <span class="keyword">function</span>(<span class="params"></span>)&#123;&#125;</span><br><span class="line"><span class="comment">// 修复：hook</span></span><br><span class="line"><span class="variable language_">console</span>.<span class="property">log_</span> = <span class="variable language_">console</span>.<span class="property">log</span>;</span><br><span class="line"><span class="variable language_">console</span>.<span class="property">log</span> = <span class="keyword">function</span>(<span class="params"></span>) &#123;&#125;;</span><br><span class="line"><span class="comment">// console.log被删掉以后</span></span><br><span class="line"><span class="variable language_">console</span>.<span class="property">log</span> = <span class="variable language_">console</span>.<span class="property">log_</span></span><br></pre></td></tr></table></figure>
+<p>检测调试：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 基于时间</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">testDebuggerByTime</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">var</span> cur = <span class="title class_">Date</span>.<span class="title function_">now</span>();</span><br><span class="line">  <span class="keyword">debugger</span>;</span><br><span class="line">  <span class="keyword">if</span>((<span class="title class_">Date</span>.<span class="title function_">now</span>() - cur) &gt; <span class="number">200</span>) &#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;debugger detected&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="title function_">testDebuggerByTime</span>();</span><br><span class="line"><span class="comment">// 过检测，hook Date.now函数即可</span></span><br><span class="line"><span class="title class_">Date</span>.<span class="property">now</span> = <span class="keyword">function</span>(<span class="params"></span>) &#123;<span class="keyword">return</span> <span class="number">1</span>;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//基于 DOM 检测</span></span><br><span class="line"><span class="comment">// 1. 监听F12键</span></span><br><span class="line"><span class="variable language_">document</span>.<span class="title function_">addEventListener</span>(<span class="string">&#x27;keydown&#x27;</span>, <span class="keyword">function</span>(<span class="params">event</span>) &#123;</span><br><span class="line">    <span class="comment">// 检查是否是 F12 键</span></span><br><span class="line">    <span class="keyword">if</span> (event.<span class="property">key</span> === <span class="string">&#x27;F12&#x27;</span>) &#123;</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;F12 key was pressed!&#x27;</span>);</span><br><span class="line">        <span class="comment">// 在这里可以执行其他操作，例如阻止默认行为</span></span><br><span class="line">        event.<span class="title function_">preventDefault</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2. 监听F8或者别的快捷键</span></span><br><span class="line"><span class="comment">// 3. Object.toString()</span></span><br><span class="line"><span class="comment">// 4. windows 宽纵比，控制台单独打开不要挤压原页面即可</span></span><br><span class="line"><span class="comment">// 5. proxy 拦截 log 执行，其实就是hook，在log中添加一些检测</span></span><br><span class="line"><span class="comment">// 6. 数据劫持，意思是如果没有打开控制台，就不会执行console.log语句，基于此我们可以打印一个document中的一个id值，或者class都可以，并重写其get方法，一旦执行console.log()函数，就会获得这个id值，进而触发检测代码，这个times就是检测被console.log几次 </span></span><br><span class="line"><span class="keyword">let</span> times = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">var</span> abc = <span class="variable language_">document</span>.<span class="title function_">createElement</span>(<span class="string">&#x27;div&#x27;</span>);</span><br><span class="line"><span class="title class_">Object</span>.<span class="title function_">defineProperty</span>(abc, <span class="string">&#x27;id&#x27;</span>, &#123;</span><br><span class="line">  <span class="attr">get</span>: <span class="keyword">function</span>(<span class="params"></span>) &#123;</span><br><span class="line">    times++;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">warn</span>(<span class="string">&quot;控制台被打开了&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(abc);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 7. </span></span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+</li>
+</ul>
+</li>
+</ol>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://example.com">EPs1l0h</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://example.com/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/">https://example.com/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://example.com" target="_blank">EPs1l0h's Castle</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"></div><div class="post_share"><div class="social-share" data-image="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechat.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/11/12/%E4%B8%80%E5%A4%A9%E4%B8%80%E7%99%BE%E9%81%93buupwn/"><img class="prev-cover" src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover3.jpg?raw=true" onerror="onerror=null;src='/img/404.gif'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">一天一百道buupwn</div></div></a></div><div class="next-post pull-right"><a href="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/"><img class="next-cover" src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="onerror=null;src='/img/404.gif'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">js逆向初探</div></div></a></div></nav><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">EPs1l0h</div><div class="author-info__description"></div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">60</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/EPs1l0h"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">Spears shall be shaken! Shields shall be splintered! A sword day! A red day! Ere the sun rises!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#JS-%E5%9F%BA%E7%A1%80"><span class="toc-number">1.</span> <span class="toc-text">JS 基础</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8"><span class="toc-number">2.</span> <span class="toc-text">工具使用</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#fiddler%E9%85%8D%E7%BD%AE"><span class="toc-number">2.1.</span> <span class="toc-text">fiddler配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%8F%E8%A7%88%E5%99%A8%E5%B7%A5%E5%85%B7"><span class="toc-number">2.2.</span> <span class="toc-text">浏览器工具</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/11/12/%E4%B8%80%E5%A4%A9%E4%B8%80%E7%99%BE%E9%81%93buupwn/" title="一天一百道buupwn"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover3.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="一天一百道buupwn"/></a><div class="content"><a class="title" href="/2024/11/12/%E4%B8%80%E5%A4%A9%E4%B8%80%E7%99%BE%E9%81%93buupwn/" title="一天一百道buupwn">一天一百道buupwn</a><time datetime="2024-11-12T09:03:46.818Z" title="发表于 2024-11-12 17:03:46">2024-11-12</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/" title="js逆向初探"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="js逆向初探"/></a><div class="content"><a class="title" href="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/" title="js逆向初探">js逆向初探</a><time datetime="2024-10-26T06:57:40.000Z" title="发表于 2024-10-26 14:57:40">2024-10-26</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/" title="js逆向初探"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="js逆向初探"/></a><div class="content"><a class="title" href="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/" title="js逆向初探">js逆向初探</a><time datetime="2024-10-26T06:57:40.000Z" title="发表于 2024-10-26 14:57:40">2024-10-26</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/10/03/SCTF2024-re-wp/" title="SCTF2024-re-wp"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover3.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="SCTF2024-re-wp"/></a><div class="content"><a class="title" href="/2024/10/03/SCTF2024-re-wp/" title="SCTF2024-re-wp">SCTF2024-re-wp</a><time datetime="2024-10-03T09:11:15.000Z" title="发表于 2024-10-03 17:11:15">2024-10-03</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/09/23/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91%E5%88%9D%E4%B8%8A%E6%89%8B/" title="前端开发初上手"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="前端开发初上手"/></a><div class="content"><a class="title" href="/2024/09/23/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91%E5%88%9D%E4%B8%8A%E6%89%8B/" title="前端开发初上手">前端开发初上手</a><time datetime="2024-09-23T02:25:10.000Z" title="发表于 2024-09-23 10:25:10">2024-09-23</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true')"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2025 By EPs1l0h</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.min.js"></script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    tex: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]],
+      tags: 'ams'
+    },
+    chtml: {
+      scale: 1.2
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, ''],
+        insertScript: [200, () => {
+          document.querySelectorAll('mjx-container:not\([display]\)').forEach(node => {
+            const target = node.parentNode
+            if (target.nodeName.toLowerCase() === 'li') {
+              target.parentNode.classList.add('has-jax')
+            } else {
+              target.classList.add('has-jax')
+            }
+          });
+        }, '', false]
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typeset()
+}</script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://example.com/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/'
+    this.page.identifier = '/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/'
+    this.page.title = 'js逆向初探'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+
+  document.getElementById('darkmode').addEventListener('click', () => {
+    setTimeout(() => window.disqusReset(), 200)
+  })
+}
+
+if ('Disqus' === 'Disqus' || !false) {
+  if (false) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script></div><div class="aplayer no-destroy" data-id="2981528901" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="true"> </div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  typeof preloader === 'object' && preloader.initLoading()
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

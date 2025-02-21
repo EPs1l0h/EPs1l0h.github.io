@@ -1,0 +1,428 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>selinux 学习 | EPs1l0h's Castle</title><meta name="author" content="EPs1l0h"><meta name="copyright" content="EPs1l0h"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="ROOT 的本质是什么所谓 root 的本质，就是 当前任务访问系统资源的能力。  在一般的实时操作系统中，这里的任务(task)指的就是线程，是计算机 CPU 对程序进行调度的最小单位。 如果我们要执行一条命令 cat &#x2F;etc&#x2F;passwd，当前用户运行了可执行文件&#x2F;bin&#x2F;cat，并且新生成一个子进程，在该进程中读取了&#x2F;etc&#x2F;passwd文件。 要看所执行的 cat &#x2F;etc&#x2F;passwd">
+<meta property="og:type" content="article">
+<meta property="og:title" content="selinux 学习">
+<meta property="og:url" content="https://example.com/2024/09/02/selinux%20%E5%AD%A6%E4%B9%A0/index.html">
+<meta property="og:site_name" content="EPs1l0h&#39;s Castle">
+<meta property="og:description" content="ROOT 的本质是什么所谓 root 的本质，就是 当前任务访问系统资源的能力。  在一般的实时操作系统中，这里的任务(task)指的就是线程，是计算机 CPU 对程序进行调度的最小单位。 如果我们要执行一条命令 cat &#x2F;etc&#x2F;passwd，当前用户运行了可执行文件&#x2F;bin&#x2F;cat，并且新生成一个子进程，在该进程中读取了&#x2F;etc&#x2F;passwd文件。 要看所执行的 cat &#x2F;etc&#x2F;passwd">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true">
+<meta property="article:published_time" content="2024-09-02T05:04:21.000Z">
+<meta property="article:modified_time" content="2024-09-02T09:03:11.085Z">
+<meta property="article:author" content="EPs1l0h">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://example.com/2024/09/02/selinux%20%E5%AD%A6%E4%B9%A0/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'selinux 学习',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-09-02 17:03:11'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="source/css/aplayer_custom.css"><meta name="generator" content="Hexo 6.2.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">60</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> home</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/writeup"><i class="fa-fw fas fa-folder-open"></i><span> writeup</span></a></li><li><a class="site-page child" href="/categories/notes"><i class="fa-fw fas fa-folder-open"></i><span> notes</span></a></li><li><a class="site-page child" href="/categories/jottings"><i class="fa-fw fas fa-folder-open"></i><span> jottings</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-link"></i><span> Link</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Here-is-SG"><i class="fa-fw fas fa-link"></i><span> iPlayForSG</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://jameshoi.github.io/"><i class="fa-fw fas fa-link"></i><span> jameshoi</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Only-xiaoxiao"><i class="fa-fw fas fa-link"></i><span> xiaoxiao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Clovershrub"><i class="fa-fw fas fa-link"></i><span> Clovershrub</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://blog.gaoyucan.site/"><i class="fa-fw fas fa-link"></i><span> gaoyucan</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://demoyao100.github.io/"><i class="fa-fw fas fa-link"></i><span> moyao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://lantern.cool/"><i class="fa-fw fas fa-link"></i><span> lantern</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://mapleqian.github.io/"><i class="fa-fw fas fa-link"></i><span> Serendy</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> about</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">EPs1l0h's Castle</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> home</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/writeup"><i class="fa-fw fas fa-folder-open"></i><span> writeup</span></a></li><li><a class="site-page child" href="/categories/notes"><i class="fa-fw fas fa-folder-open"></i><span> notes</span></a></li><li><a class="site-page child" href="/categories/jottings"><i class="fa-fw fas fa-folder-open"></i><span> jottings</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-link"></i><span> Link</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Here-is-SG"><i class="fa-fw fas fa-link"></i><span> iPlayForSG</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://jameshoi.github.io/"><i class="fa-fw fas fa-link"></i><span> jameshoi</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Only-xiaoxiao"><i class="fa-fw fas fa-link"></i><span> xiaoxiao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Clovershrub"><i class="fa-fw fas fa-link"></i><span> Clovershrub</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://blog.gaoyucan.site/"><i class="fa-fw fas fa-link"></i><span> gaoyucan</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://demoyao100.github.io/"><i class="fa-fw fas fa-link"></i><span> moyao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://lantern.cool/"><i class="fa-fw fas fa-link"></i><span> lantern</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://mapleqian.github.io/"><i class="fa-fw fas fa-link"></i><span> Serendy</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> about</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">selinux 学习</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-09-02T05:04:21.000Z" title="发表于 2024-09-02 13:04:21">2024-09-02</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-09-02T09:03:11.085Z" title="更新于 2024-09-02 17:03:11">2024-09-02</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/notes/">notes</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="selinux 学习"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="ROOT-的本质是什么"><a href="#ROOT-的本质是什么" class="headerlink" title="ROOT 的本质是什么"></a>ROOT 的本质是什么</h1><p>所谓 root 的本质，就是 <strong>当前任务访问系统资源的能力</strong>。</p>
+<blockquote>
+<p>在一般的实时操作系统中，这里的<strong>任务</strong>(task)指的就是<strong>线程</strong>，是计算机 CPU 对程序进行调度的最小单位。</p>
+<p>如果我们要执行一条命令 <code>cat /etc/passwd</code>，当前用户运行了可执行文件<code>/bin/cat</code>，并且新生成一个子进程，在该进程中读取了<code>/etc/passwd</code>文件。</p>
+<p>要看所执行的 <code>cat /etc/passwd</code> 是否能够成功，其实是看在内核中下面这些条件能否满足:</p>
+<ul>
+<li>当前的线程是否可访问、执行<code>cat</code>可执行文件，是否可以创建新进程；</li>
+<li>新进程如何继承当前进程的属性，这决定了新线程是否可以访问 <code>/etc/passwd</code>；</li>
+</ul>
+</blockquote>
+<h1 id="访问控制是什么"><a href="#访问控制是什么" class="headerlink" title="访问控制是什么"></a>访问控制是什么</h1><p>在计算机安全领域，访问控制表示<strong>操作系统</strong>对某个主体(subject)访问或者执行某种操作的约束，主体可以是线程或者进程，操作可以是访问文件、目录、TCP/UDP 端口、共享内存段、IO 设备等对象。这类约束可以抽象成两大类，一类可以由对象的属主对自己的访问者进行管理，称为自主访问控制(DAC)；另外一类由操作系统统一管理，称为强制访问控制(MAC)。</p>
+<h2 id="DAC"><a href="#DAC" class="headerlink" title="DAC"></a>DAC</h2><p>DAC 即 <strong>Discretionary Access Control</strong>，这种权限管理机制的主体是用户，因为权限的控制是自主的，因此称为自主访问控制。</p>
+<p>在没有使用 SELinux 的操作系统中，决定一个资源是否能被访问的因素是：某个资源是否拥有对应用户的权限（读、写、执行），只要访问这个资源的进程符合以上的条件就可以被访问，而最致命问题是，root 用户不受任何管制，系统上任何资源都可以无限制地访问。</p>
+<p>DAC 有两种自主访问控制策略，分别是文件权限码和访问控制列表 ACL (Access Control List)。</p>
+<p>文件权限码就是我们常说的9位权限码，分别表示当前用户(user/owner)、用户组(group) 和其他用户(other) 对应的 读、写、执行 (rwx) 访问权限，可以参考 <a target="_blank" rel="noopener" href="https://linux.die.net/man/1/chmod">chmod</a>。实际上在 Linux 操作系统中在前面还增加了三位，分别是:</p>
+<ul>
+<li><strong>S_ISUID</strong> (04000): SETUID 位，用于在 exeve 系统调用时设置进程的有效用户ID(effective user ID)；</li>
+<li><strong>S_ISGID</strong> (02000): SETGID 位，和 SETUID 类似，从父目录中继承；</li>
+<li><strong>S_ISVTX</strong> (01000): sticky bit，即防删除位，防止其他用户删除公共文件，通常用于<code>/tmp</code>目录下；</li>
+</ul>
+<p>通过文件权限码可以实现一定程度上的自主访问控制，但是对于多用户系统而言只能通过用户组去管理，无法控制某个文件可以让用户A访问而不让用户B访问。ACL 就是为了实现这个目标而出现的。例如，需要单独给某个用户添加文件的读权限如下：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ setfacl -m u:evilpan:r /etc/passwd</span><br></pre></td></tr></table></figure>
+<p>具体命令可以参考 <a target="_blank" rel="noopener" href="https://linux.die.net/man/1/setfacl">setfacl</a>，值得一提的是，ACL需要内核和文件系统的支持。</p>
+<h2 id="MAC"><a href="#MAC" class="headerlink" title="MAC"></a>MAC</h2><p>MAC 即 <strong>Mandatory Access Control</strong>，这种权限管理机制的主体是进程，是用于将系统中的信息分密级和类进行管理，以保证每个用户只能访问到那些被标明可以由他访问的信息的一种访问约束机制。</p>
+<p>通俗的来说，在强制访问控制下，用户(或其他主体)与文件((其他客体)都被标记了固定的安全属性(如安全级、访问权限等)，在每次访问发生时，系统检测安全属性以便确定一个用户是否有权访问该文件。其中 SELinux 和 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/AppArmor">AppArmor</a> 就是 Linux 中典型的强制访问控制实现。</p>
+<p>在使用了 SELinux 的操作系统中，决定一个资源是否能被访问的因素除了某个资源是否拥有对应用户的权限（读、写、执行），还需要判断每一类进程是否拥有对某一类资源的访问权限，这样一来，即使进程是以 root 身份运行的，也需要判断这个进程的类型以及允许访问的资源类型才能决定是否允许访问某个资源。进程的活动空间也可以被压缩到最小。即使是以 root 身份运行的服务进程，一般也只能访问到它所需要的资源。即使程序出了漏洞，影响范围也只有在其允许访问的资源范围内。安全性大大增加。</p>
+<h1 id="UID"><a href="#UID" class="headerlink" title="UID"></a>UID</h1><p>访问控制策略是根据用户和组去进行管理的。对于操作系统而言，为了方便管理，用户和组都分别对应数字 ID，即 UID 和 GID。</p>
+<p>一般情况下 su 是一个设置了 SETUID 位的程序，并且 owner 是 root 用户。普通用户执行该程序只是上是对该文件执行了execve系统调用，也就是说，内核会根据 SETUID 位来调整当前进程的权限，这主要是通过有效用户ID去实现的，如果文件名所指的程序文件设置了 set-user-ID 位，并且底层文件系统没有以 nosuid 方式挂载（即挂载时没有使用 <code>MS_NOSUID</code> 标志），并且调用进程没有被 ptrace 调试，那么调用进程的有效用户 ID 将被更改为该程序文件所有者的用户 ID。</p>
+<blockquote>
+<p>Linux中的用户ID分为 <strong>real user id</strong> 和 <strong>effective user id</strong>，前者用来表示进程的真实用户，后者用来表示当前所表示的有效用户。</p>
+</blockquote>
+<p>在内核里的 task_struct 中有一个 <strong>struct cred</strong> 字段，该字段对应的结构就包含了当前任务的安全相关上下文信息，其中就有 uid</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">cred</span> &#123;</span><br><span class="line">	<span class="type">atomic_t</span>	usage;</span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> CONFIG_DEBUG_CREDENTIALS</span></span><br><span class="line">	<span class="type">atomic_t</span>	subscribers;	<span class="comment">/* number of processes subscribed */</span></span><br><span class="line">	<span class="type">void</span>		*put_addr;</span><br><span class="line">	<span class="type">unsigned</span>	magic;</span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CRED_MAGIC	0x43736564</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CRED_MAGIC_DEAD	0x44656144</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">	<span class="type">kuid_t</span>		uid;		<span class="comment">/* real UID of the task */</span></span><br><span class="line">	<span class="type">kgid_t</span>		gid;		<span class="comment">/* real GID of the task */</span></span><br><span class="line">	<span class="type">kuid_t</span>		suid;		<span class="comment">/* saved UID of the task */</span></span><br><span class="line">	<span class="type">kgid_t</span>		sgid;		<span class="comment">/* saved GID of the task */</span></span><br><span class="line">	<span class="type">kuid_t</span>		euid;		<span class="comment">/* effective UID of the task */</span></span><br><span class="line">	<span class="type">kgid_t</span>		egid;		<span class="comment">/* effective GID of the task */</span></span><br><span class="line">	<span class="type">kuid_t</span>		fsuid;		<span class="comment">/* UID for VFS ops */</span></span><br><span class="line">	<span class="type">kgid_t</span>		fsgid;		<span class="comment">/* GID for VFS ops */</span></span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">&#125; __randomize_layout;</span><br></pre></td></tr></table></figure>
+<h1 id="Capabilities"><a href="#Capabilities" class="headerlink" title="Capabilities"></a>Capabilities</h1><p>传统 Linux 执行权限检测主要是基于 UID，而且只有两个分类，即 (effective) UID 为 0 的超级用户和其他普通用户。这样一来就会面临权限划分粒度太粗的问题，比如只想让普通用户可以访问 ping 程序，就需要给 ping 文件加上 SETUID 位，如果该可执行文件的实现存在漏洞，就可能被利用造成权限提升。</p>
+<p>因此，从 Linux 2.2 开始，就引入了 capabilities，将超级用户的权限进行切分，并且按需要给普通用户进行分配，解决了传统 UID-0 的局限性。</p>
+<p>capabilities 以任务(<strong>线程</strong>)为单位，还是在上面内核的 <code>struct cred</code> 结构体中，其相关的字段为:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">cred</span> &#123;</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">	<span class="type">kernel_cap_t</span>	cap_inheritable; <span class="comment">/* caps our children can inherit */</span></span><br><span class="line">	<span class="type">kernel_cap_t</span>	cap_permitted;	<span class="comment">/* caps we&#x27;re permitted */</span></span><br><span class="line">	<span class="type">kernel_cap_t</span>	cap_effective;	<span class="comment">/* caps we can actually use */</span></span><br><span class="line">	<span class="type">kernel_cap_t</span>	cap_bset;	<span class="comment">/* capability bounding set */</span></span><br><span class="line">	<span class="type">kernel_cap_t</span>	cap_ambient;	<span class="comment">/* Ambient capability set */</span></span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从定义上看，一共有三类 capability，分别是 effective、permitted 和 inheritable，这和 UID 的设计初衷是类似的，因为进程可以被复制(fork)，因此增加了 inheritable 的控制。对于每一类 capabilities，由于其类型是<code>__u32</code>，每项 capability 通过位与方式进行组合，因此最多可以支持 32 种 capability，其中一些常见的包括:</p>
+<ul>
+<li>CAP_NET_RAW: 创建和使用 RAW/PACKET socket 的权限以及绑定透明代理地址的权限；</li>
+<li>CAP_NET_ADMIN: 各类网关相关的操作，比如网卡接口配置、路由表修改等；</li>
+<li>CAP_SETUID: 设置和修改进程 UID 的权限；</li>
+<li>CAP_SYS_PTRACE: 使用 ptrace 跟踪任意其他进程的能力；</li>
+<li>….</li>
+</ul>
+<p>完整的权限列表可以参考 <a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man7/capabilities.7.html">capabilities(7)</a>。</p>
+<p>对于系统管理员而言，更多是使用 capsh、getcap、setcap 等命令行工具，不过本质上都是通过 <a target="_blank" rel="noopener" href="https://git.kernel.org/pub/scm/libs/libcap/libcap.git/">libcap</a> 对系统调用进行封装实现的。</p>
+<h1 id="SELinux"><a href="#SELinux" class="headerlink" title="SELinux"></a>SELinux</h1><p>SELinux 即 Security Enhanced Linux，是 Linux 中强制访问控制的两大实现之一(另一个是 AppArmor)，作为 Linux 的拓展，最初由 NSA 开发，后集成到了开源内核主线中。</p>
+<h2 id="用户态"><a href="#用户态" class="headerlink" title="用户态"></a>用户态</h2><p>在 SELinux 中，访问控制通过 context 来描述访问权限，例如对于文件系统，可以使用 <code>ls -Z</code> 查看文件对应的标签:</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">generic:/ <span class="comment"># ls -lZ /</span></span><br><span class="line">total 2424</span><br><span class="line">dr-xr-xr-x  3 root   root   u:object_r:cgroup:s0                 0 1970-01-01 08:00 acct</span><br><span class="line">lrwxrwxrwx  1 root   root   u:object_r:rootfs:s0                50 1970-01-01 08:00 bugreports -&gt; /data/user_de/0/com.android.shell/files/bugreports</span><br><span class="line">drwxrwx---  6 system cache  u:object_r:cache_file:s0          4096 2019-12-23 16:52 cache</span><br><span class="line">lrwxrwxrwx  1 root   root   u:object_r:rootfs:s0                13 1970-01-01 08:00 charger -&gt; /sbin/healthd</span><br><span class="line">dr-x------  2 root   root   u:object_r:rootfs:s0                40 1970-01-01 08:00 config</span><br><span class="line">lrwxrwxrwx  1 root   root   u:object_r:rootfs:s0                17 1970-01-01 08:00 d -&gt; /sys/kernel/debug</span><br><span class="line">drwxrwx--x 38 system system u:object_r:system_data_file:s0    4096 1970-01-01 08:00 data</span><br></pre></td></tr></table></figure>
+<p>对于网络端口的标签，可以用 <code>netstat -Z</code>查看；对于进程标签，则可以通过<code>ps -Z</code>查看:</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">generic:/ <span class="comment"># ps -Z</span></span><br><span class="line">LABEL                          USER      PID   PPID  VSIZE  RSS   WCHAN            PC  NAME</span><br><span class="line">u:r:init:s0                    root      1     0     7856   1556  SyS_epoll_ 0008e458 S /init</span><br><span class="line">u:r:kernel:s0                  root      2     0     0      0       kthreadd 00000000 S kthreadd</span><br><span class="line">u:r:platform_app:s0:c512,c768  u0_a28    1642  885   1669496 105556 binder_thr ab777494 D com.android.systemui</span><br><span class="line">u:r:fingerprintd:s0            system    901   1     8260   3536  binder_thr b12da494 S /system/bin/fingerprintd</span><br><span class="line">u:r:gatekeeperd:s0             system    902   1     7244   2888  binder_thr b21a1494 S /system/bin/gatekeeperd</span><br><span class="line">u:r:perfprofd:s0               root      903   1     4104   1740  hrtimer_na a72f0378 S /system/xbin/perfprofd</span><br><span class="line">u:r:logd:s0                    logd      906   1     4644   2184  __skb_recv ac3d3584 S /system/bin/logcat</span><br><span class="line">u:r:shell:s0                   shell     909   884   3544   1896  sigsuspend af915698 S /system/bin/sh</span><br></pre></td></tr></table></figure>
+<p>context 可以分为几个部分，使用冒号<code>:</code>分隔，分别是:</p>
+<ul>
+<li><strong>user</strong>: 表示 SELinux 用户账号，与 Linux 用户账号不同，前者在 policy 中定义，包含多层级权限；</li>
+<li><strong>role</strong>: 定义了主体(subject)在特定域(domain)中可以对客体(object)进行的操作；</li>
+<li><strong>type</strong>: 定义了文件的类型；</li>
+<li>sensitivity: 即最后一个字段，表示涉密等级，范围可以从c0到c1023，c3表示<code>Top Secret</code>。该字段仅在 MLS 模式中使用，用于高敏感度的国防军事机构，对于客户端或者一般数据服务器而言只需保留默认值。</li>
+</ul>
+<p>对一系列系统资源增加标签后，系统就可以根据标签来判断访问是否应该允许，一个示例的访问拒绝日志如下:</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">type</span>=1400 audit(18.250:15): avc: denied &#123; getattr &#125; <span class="keyword">for</span> pid=939 <span class="built_in">comm</span>=<span class="string">&quot;ls&quot;</span> path=<span class="string">&quot;/ueventd.rc&quot;</span> dev=<span class="string">&quot;rootfs</span></span><br></pre></td></tr></table></figure>
+<p>访问权限的判断是在内核中实现的，但是访问规则可以动态生成和更新，内核中只预置了一系列触发点。SELinux 规则(policy)通常使用自定义的高级语言去描述，目前正在开发的是 <a target="_blank" rel="noopener" href="https://github.com/SELinuxProject/cil.git">CIL(Common Intermediate Language)</a>，但使用更多的是传统的 MLS Statements，比如访问规则的定义如下:</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rule_name source_type target_type:class perm_set;</span><br></pre></td></tr></table></figure>
+<p>一个具体的例子:</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">allow initrc_t acct_exec_t:file &#123; getattr <span class="built_in">read</span> execute &#125;;</span><br></pre></td></tr></table></figure>
+<p>表示允许拥有<code>initrc_t</code>标签类型的主体访问带有<code>acct_exec_t</code>标签的目标<code>文件</code>，访问权限为 getattr、read和write。其中类型是使用<code>type</code>关键字定义的，一般使用单独的<code>file_contexts</code>文件记录。MLS 的完整语法见 <a target="_blank" rel="noopener" href="https://selinuxproject.org/page/PolicyLanguage">Kernel Policy Language Definition Links</a>。</p>
+<p>对于系统管理员而言，常用的相关命令有:</p>
+<ul>
+<li>chcon: 修改目标文件的 SELinux 标签；</li>
+<li>resotrecon: 重新加载(恢复)系统文件的 SELinux 标签；</li>
+<li>semanage: 实时修改当前系统的 SELinux 规则；</li>
+<li>…</li>
+</ul>
+<h2 id="内核态"><a href="#内核态" class="headerlink" title="内核态"></a>内核态</h2><p>前面说 SELinux 是在内核中进行检查的，那么就以打开文件的操作为例来简单分析下 SELinux 的校验过程。打开文件使用的系统调用是<code>openat</code>，该系统调用在内核中的大致调用路径如下:</p>
+<ul>
+<li>sys_openat</li>
+<li>do_sys_open</li>
+<li>do_filp_open</li>
+<li>path_openat</li>
+<li>do_last</li>
+<li>may_open</li>
+<li>inode_permission<ul>
+<li>do_inode_permission -&gt; generic_permission</li>
+<li>devcgroup_inode_permission</li>
+<li><strong>security_inode_permission</strong></li>
+</ul>
+</li>
+</ul>
+<p>inode_permission 是在文件打开之前检查文件系统 inode 权限的操作，其中包含常规的 DAC 检查、cgroup 权限检查以及我们所关心的 SELinux 检查:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> call_int_hook(FUNC, IRC, ...) (&#123;			\</span></span><br><span class="line"><span class="meta">	int RC = IRC;						\</span></span><br><span class="line"><span class="meta">	do &#123;							\</span></span><br><span class="line"><span class="meta">		struct security_hook_list *P;			\</span></span><br><span class="line"><span class="meta">								\</span></span><br><span class="line"><span class="meta">		list_for_each_entry(P, &amp;security_hook_heads.FUNC, list) &#123; \</span></span><br><span class="line"><span class="meta">			RC = P-&gt;hook.FUNC(__VA_ARGS__);		\</span></span><br><span class="line"><span class="meta">			<span class="keyword">if</span> (RC != 0)				\</span></span><br><span class="line"><span class="meta">				break;				\</span></span><br><span class="line"><span class="meta">		&#125;						\</span></span><br><span class="line"><span class="meta">	&#125; while (0);						\</span></span><br><span class="line"><span class="meta">	RC;							\</span></span><br><span class="line"><span class="meta">&#125;)</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">security_inode_permission</span><span class="params">(<span class="keyword">struct</span> inode *inode, <span class="type">int</span> mask)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">if</span> (unlikely(IS_PRIVATE(inode)))</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	<span class="keyword">return</span> call_int_hook(inode_permission, <span class="number">0</span>, inode, mask);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>struct security_hook_heads</strong> 是一个结构体，其中包含一系列链表，每个链表都对应一类 SELinux hook:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">security_hook_heads</span> &#123;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">binder_set_context_mgr</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">binder_transaction</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">binder_transfer_binder</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">binder_transfer_file</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">ptrace_access_check</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">ptrace_traceme</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">capget</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">capset</span>;</span></span><br><span class="line">  <span class="comment">//...</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">inode_permission</span>;</span></span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>每个链表都是在内核启动时进行初始化的，<code>inode_permission</code>也不例外。在<code>security/linux/hooks.c</code>中定义了静态数组<code>selinux_hooks</code>:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">security_hook_list</span> <span class="title">selinux_hooks</span>[] =</span> &#123;</span><br><span class="line">	LSM_HOOK_INIT(binder_set_context_mgr, selinux_binder_set_context_mgr),</span><br><span class="line">	LSM_HOOK_INIT(binder_transaction, selinux_binder_transaction),</span><br><span class="line">	LSM_HOOK_INIT(binder_transfer_binder, selinux_binder_transfer_binder),</span><br><span class="line">	LSM_HOOK_INIT(binder_transfer_file, selinux_binder_transfer_file),</span><br><span class="line"></span><br><span class="line">	LSM_HOOK_INIT(ptrace_access_check, selinux_ptrace_access_check),</span><br><span class="line">	LSM_HOOK_INIT(ptrace_traceme, selinux_ptrace_traceme),</span><br><span class="line">	LSM_HOOK_INIT(capget, selinux_capget),</span><br><span class="line">	LSM_HOOK_INIT(capset, selinux_capset),</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">	LSM_HOOK_INIT(inode_permission, selinux_inode_permission),</span><br><span class="line">	<span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>因此，selinux_inode_permission 就是实际进行 SELinux 检查的函数:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">selinux_inode_permission</span><span class="params">(<span class="keyword">struct</span> inode *inode, <span class="type">int</span> mask)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">cred</span> *<span class="title">cred</span> =</span> current_cred();</span><br><span class="line">	u32 perms;</span><br><span class="line">	<span class="type">bool</span> from_access;</span><br><span class="line">	<span class="type">unsigned</span> flags = mask &amp; MAY_NOT_BLOCK;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">inode_security_struct</span> *<span class="title">isec</span>;</span></span><br><span class="line">	u32 sid;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">av_decision</span> <span class="title">avd</span>;</span></span><br><span class="line">	<span class="type">int</span> rc, rc2;</span><br><span class="line">	u32 audited, denied;</span><br><span class="line"></span><br><span class="line">	from_access = mask &amp; MAY_ACCESS;</span><br><span class="line">	mask &amp;= (MAY_READ|MAY_WRITE|MAY_EXEC|MAY_APPEND);</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* No permission to check.  Existence test. */</span></span><br><span class="line">	<span class="keyword">if</span> (!mask)</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">	validate_creds(cred);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (unlikely(IS_PRIVATE(inode)))</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">	perms = file_mask_to_av(inode-&gt;i_mode, mask);</span><br><span class="line"></span><br><span class="line">	sid = cred_sid(cred);</span><br><span class="line">	isec = inode-&gt;i_security;</span><br><span class="line"></span><br><span class="line">	rc = avc_has_perm_noaudit(sid, isec-&gt;sid, isec-&gt;sclass, perms, <span class="number">0</span>, &amp;avd);</span><br><span class="line">	audited = avc_audit_required(perms, &amp;avd, rc,</span><br><span class="line">				     from_access ? FILE__AUDIT_ACCESS : <span class="number">0</span>,</span><br><span class="line">				     &amp;denied);</span><br><span class="line">	<span class="keyword">if</span> (likely(!audited))</span><br><span class="line">		<span class="keyword">return</span> rc;</span><br><span class="line"></span><br><span class="line">	rc2 = audit_inode_permission(inode, perms, audited, denied, rc, flags);</span><br><span class="line">	<span class="keyword">if</span> (rc2)</span><br><span class="line">		<span class="keyword">return</span> rc2;</span><br><span class="line">	<span class="keyword">return</span> rc;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里有几个值得注意的地方，一个是 selinux_hooks 中注册了很多回调列表，这些模块就是内核中预置的检查点；另外，在 <code>selinux_inode_permission</code> 函数中，使用 <code>file_mask_to_av</code> 来将打开文件的 flag 转换成 SELinux 对应的访问动作(Access Vector):</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Convert a Linux mode and permission mask to an access vector. */</span></span><br><span class="line"><span class="type">static</span> <span class="keyword">inline</span> u32 <span class="title function_">file_mask_to_av</span><span class="params">(<span class="type">int</span> mode, <span class="type">int</span> mask)</span></span><br><span class="line">&#123;</span><br><span class="line">	u32 av = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!S_ISDIR(mode)) &#123;</span><br><span class="line">		<span class="keyword">if</span> (mask &amp; MAY_EXEC)</span><br><span class="line">			av |= FILE__EXECUTE;</span><br><span class="line">		<span class="keyword">if</span> (mask &amp; MAY_READ)</span><br><span class="line">			av |= FILE__READ;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (mask &amp; MAY_APPEND)</span><br><span class="line">			av |= FILE__APPEND;</span><br><span class="line">		<span class="keyword">else</span> <span class="keyword">if</span> (mask &amp; MAY_WRITE)</span><br><span class="line">			av |= FILE__WRITE;</span><br><span class="line"></span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> (mask &amp; MAY_EXEC)</span><br><span class="line">			av |= DIR__SEARCH;</span><br><span class="line">		<span class="keyword">if</span> (mask &amp; MAY_WRITE)</span><br><span class="line">			av |= DIR__WRITE;</span><br><span class="line">		<span class="keyword">if</span> (mask &amp; MAY_READ)</span><br><span class="line">			av |= DIR__READ;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> av;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这些宏定义在 <code>&lt;build&gt;/security/selinux/av_permissions.h</code>中，是编译内核时自动生成的。在确认该次访问需要审计后，就接着调用 audit_inode_permission -&gt; slow_avc_audit 进行实际的判断了。因为这类访问控制判断需要频繁调用，出于性能考虑判断过程所使用的访问规则预先编译好并已经加载到内核缓存中，称为 avc (Access Vector Cache)，这也是前面日志中 avc 的来源。</p>
+<h1 id="SEAndroid"><a href="#SEAndroid" class="headerlink" title="SEAndroid"></a>SEAndroid</h1><p>Google 在 Android 4.4 上正式添加以 SELinux 为基础的系统安全机制，命名为SEAndroid。SEAndroid 在架构和机制上与 SELinux 完全一样，基于移动设备的特点，SEAndroid 的只是所以移植 SELinux 的一个子集。</p>
+<h2 id="模式"><a href="#模式" class="headerlink" title="模式"></a>模式</h2><ul>
+<li>Disable模式：此种模式关闭SELinux检测，不进行任何SELinux权限检查，畅通无阻。</li>
+<li>Permissive模式：宽容模式，当权限检查不通过时，不决绝资源访问，只打印avc log日志。</li>
+<li>Enforceing模式：强制模式，此种模式下权限检查不通过时，拒绝资源访问，并打出avc log，这个是最狠模式。</li>
+</ul>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#查看SeLinux状态</span></span><br><span class="line">adb shell getenforce</span><br><span class="line"></span><br><span class="line"><span class="comment">#设置SeLinux模式为Enforcing（只允许Enforcing和Permissive之间切换）</span></span><br><span class="line">adb shell <span class="string">&#x27;su -c setenforce 1&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#设置SeLinux模式为Permisssive</span></span><br><span class="line">adb shell <span class="string">&#x27;su -c setenforce 0&#x27;</span></span><br></pre></td></tr></table></figure>
+<h2 id="SEAndroid-app分类"><a href="#SEAndroid-app分类" class="headerlink" title="SEAndroid app分类"></a>SEAndroid app分类</h2><p>ELinux(或SEAndroid)将app划分为主要三种类型(根据user不同，也有其他的domain类型)：</p>
+<ul>
+<li><p>untrusted_app：第三方app，没有Android平台签名，没有system权限</p>
+</li>
+<li><p>platform_app：有android平台签名，没有system权限</p>
+</li>
+<li><p>system_app：有android平台签名和system权限</p>
+</li>
+<li><p>untrusted_app_25：第三方app，没有Android平台签名，没有system权限，其定义为 <code>This file defines the rules for untrusted apps running with targetSdkVersion &lt;= 25</code></p>
+</li>
+</ul>
+<p>从上面划分，权限等级，理论上：<code>untrusted_app &lt; platform_app &lt; system_app</code> 按照这个进行排序 property_contexts（系统属性）主要描述系统属性相关</p>
+<h2 id="seaapp-context-定义"><a href="#seaapp-context-定义" class="headerlink" title="seaapp_context 定义"></a>seaapp_context 定义</h2><p>seapp_contexts定义在system/sepolicy/seapp_contexts数据文件，如下</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">isSystemServer=<span class="literal">true</span> domain=system_server</span><br><span class="line">user=system seinfo=platform domain=system_app <span class="built_in">type</span>=system_app_data_file</span><br><span class="line">user=bluetooth seinfo=platform domain=bluetooth <span class="built_in">type</span>=bluetooth_data_file</span><br><span class="line">user=nfc seinfo=platform domain=nfc <span class="built_in">type</span>=nfc_data_file</span><br><span class="line">user=radio seinfo=platform domain=radio <span class="built_in">type</span>=radio_data_file</span><br><span class="line">user=shared_relro domain=shared_relro</span><br><span class="line">user=shell seinfo=platform domain=shell <span class="built_in">type</span>=shell_data_file</span><br><span class="line">user=_isolated domain=isolated_app levelFrom=user</span><br><span class="line">user=_app seinfo=platform domain=platform_app <span class="built_in">type</span>=app_data_file levelFrom=user</span><br><span class="line">user=_app domain=untrusted_app <span class="built_in">type</span>=app_data_file levelFrom=user</span><br></pre></td></tr></table></figure>
+<p>从上面可以看出，domain和type由user和seinfo两个参数决定。</p>
+<p>比如:</p>
+<p>user=system seinfo=platform，domain才是system_app</p>
+<p>user=_app，可以是untrusted_app或platform_app，如果seinfo=platform，则是platform_app。</p>
+<h1 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h1><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/tkwxty/article/details/104538447">Android SELinux开发入门指南之SELinux基础知识_selinux书-CSDN博客</a></p>
+<p><a target="_blank" rel="noopener" href="https://evilpan.com/2020/12/06/android-rooting/">Android/Linux Root 的那些事儿 - 有价值炮灰 (evilpan.com)</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/165974960">一文彻底明白linux中的selinux到底是什么 - 知乎 (zhihu.com)</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/tkwxty/article/details/103938287">正确姿势临时和永久开启关闭Android的SELinux_setenforce: couldn’t set enforcing status to ‘0’: -CSDN博客</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://example.com">EPs1l0h</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://example.com/2024/09/02/selinux%20%E5%AD%A6%E4%B9%A0/">https://example.com/2024/09/02/selinux%20%E5%AD%A6%E4%B9%A0/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://example.com" target="_blank">EPs1l0h's Castle</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"></div><div class="post_share"><div class="social-share" data-image="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechat.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2024/09/04/%E6%9F%90%E4%B8%9Csign%E7%AE%97%E6%B3%95%E5%88%86%E6%9E%90%E8%AE%B0%E5%BD%95/"><img class="prev-cover" src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="onerror=null;src='/img/404.gif'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">某东sign算法分析记录（萌新向）</div></div></a></div><div class="next-post pull-right"><a href="/2024/08/02/%E6%9F%90%E7%97%85%E6%AF%92%E6%A0%B7%E6%9C%AC%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A/"><img class="next-cover" src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="onerror=null;src='/img/404.gif'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">某病毒样本分析报告</div></div></a></div></nav><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">EPs1l0h</div><div class="author-info__description"></div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">60</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/EPs1l0h"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">Spears shall be shaken! Shields shall be splintered! A sword day! A red day! Ere the sun rises!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#ROOT-%E7%9A%84%E6%9C%AC%E8%B4%A8%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-number">1.</span> <span class="toc-text">ROOT 的本质是什么</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%AE%BF%E9%97%AE%E6%8E%A7%E5%88%B6%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-number">2.</span> <span class="toc-text">访问控制是什么</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#DAC"><span class="toc-number">2.1.</span> <span class="toc-text">DAC</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MAC"><span class="toc-number">2.2.</span> <span class="toc-text">MAC</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#UID"><span class="toc-number">3.</span> <span class="toc-text">UID</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Capabilities"><span class="toc-number">4.</span> <span class="toc-text">Capabilities</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#SELinux"><span class="toc-number">5.</span> <span class="toc-text">SELinux</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%A8%E6%88%B7%E6%80%81"><span class="toc-number">5.1.</span> <span class="toc-text">用户态</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E6%80%81"><span class="toc-number">5.2.</span> <span class="toc-text">内核态</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#SEAndroid"><span class="toc-number">6.</span> <span class="toc-text">SEAndroid</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A8%A1%E5%BC%8F"><span class="toc-number">6.1.</span> <span class="toc-text">模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SEAndroid-app%E5%88%86%E7%B1%BB"><span class="toc-number">6.2.</span> <span class="toc-text">SEAndroid app分类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#seaapp-context-%E5%AE%9A%E4%B9%89"><span class="toc-number">6.3.</span> <span class="toc-text">seaapp_context 定义</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="toc-number">7.</span> <span class="toc-text">参考链接</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2024/11/12/%E4%B8%80%E5%A4%A9%E4%B8%80%E7%99%BE%E9%81%93buupwn/" title="一天一百道buupwn"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover3.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="一天一百道buupwn"/></a><div class="content"><a class="title" href="/2024/11/12/%E4%B8%80%E5%A4%A9%E4%B8%80%E7%99%BE%E9%81%93buupwn/" title="一天一百道buupwn">一天一百道buupwn</a><time datetime="2024-11-12T09:03:46.818Z" title="发表于 2024-11-12 17:03:46">2024-11-12</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/" title="js逆向初探"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="js逆向初探"/></a><div class="content"><a class="title" href="/2024/10/26/js%E9%80%86%E5%90%91%E5%88%9D%E6%8E%A2/" title="js逆向初探">js逆向初探</a><time datetime="2024-10-26T06:57:40.000Z" title="发表于 2024-10-26 14:57:40">2024-10-26</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/" title="js逆向初探"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="js逆向初探"/></a><div class="content"><a class="title" href="/2024/10/26/%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%94%BB%E5%87%BB%E6%83%B3%E6%B3%95%E4%B8%8E%E5%B0%9D%E8%AF%95/" title="js逆向初探">js逆向初探</a><time datetime="2024-10-26T06:57:40.000Z" title="发表于 2024-10-26 14:57:40">2024-10-26</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/10/03/SCTF2024-re-wp/" title="SCTF2024-re-wp"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover3.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="SCTF2024-re-wp"/></a><div class="content"><a class="title" href="/2024/10/03/SCTF2024-re-wp/" title="SCTF2024-re-wp">SCTF2024-re-wp</a><time datetime="2024-10-03T09:11:15.000Z" title="发表于 2024-10-03 17:11:15">2024-10-03</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024/09/23/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91%E5%88%9D%E4%B8%8A%E6%89%8B/" title="前端开发初上手"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="前端开发初上手"/></a><div class="content"><a class="title" href="/2024/09/23/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91%E5%88%9D%E4%B8%8A%E6%89%8B/" title="前端开发初上手">前端开发初上手</a><time datetime="2024-09-23T02:25:10.000Z" title="发表于 2024-09-23 10:25:10">2024-09-23</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true')"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2025 By EPs1l0h</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.min.js"></script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    tex: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]],
+      tags: 'ams'
+    },
+    chtml: {
+      scale: 1.2
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, ''],
+        insertScript: [200, () => {
+          document.querySelectorAll('mjx-container:not\([display]\)').forEach(node => {
+            const target = node.parentNode
+            if (target.nodeName.toLowerCase() === 'li') {
+              target.parentNode.classList.add('has-jax')
+            } else {
+              target.classList.add('has-jax')
+            }
+          });
+        }, '', false]
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typeset()
+}</script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://example.com/2024/09/02/selinux%20%E5%AD%A6%E4%B9%A0/'
+    this.page.identifier = '/2024/09/02/selinux%20%E5%AD%A6%E4%B9%A0/'
+    this.page.title = 'selinux 学习'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+
+  document.getElementById('darkmode').addEventListener('click', () => {
+    setTimeout(() => window.disqusReset(), 200)
+  })
+}
+
+if ('Disqus' === 'Disqus' || !false) {
+  if (false) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script></div><div class="aplayer no-destroy" data-id="2981528901" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="true"> </div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  typeof preloader === 'object' && preloader.initLoading()
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
