@@ -1,0 +1,612 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Android Kernel Patch | EPs1l0h's Castle</title><meta name="author" content="EPs1l0h"><meta name="copyright" content="EPs1l0h"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Android Kernel PatchAndroid逆向中，我们分析app时常常遇到如下问题：  APP获取了哪些设备信息 APP怎么检测调试器 APP怎么检测Frida APP怎么检测root环境  同时在检测到该行为，并定位到具体代码位置后，我们如何去修改设备信息、隐藏调试器、隐藏Frida又是一个问题。 比如传统方法检测调试器是检查 &#x2F;proc&#x2F;pid&#x2F;status 文件，调试器附加进程后">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android Kernel Patch">
+<meta property="og:url" content="https://example.com/2025/03/22/Android%20Kernel%20Patch/index.html">
+<meta property="og:site_name" content="EPs1l0h&#39;s Castle">
+<meta property="og:description" content="Android Kernel PatchAndroid逆向中，我们分析app时常常遇到如下问题：  APP获取了哪些设备信息 APP怎么检测调试器 APP怎么检测Frida APP怎么检测root环境  同时在检测到该行为，并定位到具体代码位置后，我们如何去修改设备信息、隐藏调试器、隐藏Frida又是一个问题。 比如传统方法检测调试器是检查 &#x2F;proc&#x2F;pid&#x2F;status 文件，调试器附加进程后">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true">
+<meta property="article:published_time" content="2025-03-22T10:04:21.000Z">
+<meta property="article:modified_time" content="2025-03-21T10:39:56.000Z">
+<meta property="article:author" content="EPs1l0h">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://example.com/2025/03/22/Android%20Kernel%20Patch/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Android Kernel Patch',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-03-21 18:39:56'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="source/css/aplayer_custom.css"><meta name="generator" content="Hexo 6.2.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">63</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> home</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/writeup"><i class="fa-fw fas fa-folder-open"></i><span> writeup</span></a></li><li><a class="site-page child" href="/categories/notes"><i class="fa-fw fas fa-folder-open"></i><span> notes</span></a></li><li><a class="site-page child" href="/categories/jottings"><i class="fa-fw fas fa-folder-open"></i><span> jottings</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-link"></i><span> Link</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Here-is-SG"><i class="fa-fw fas fa-link"></i><span> iPlayForSG</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://jameshoi.github.io/"><i class="fa-fw fas fa-link"></i><span> jameshoi</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Only-xiaoxiao"><i class="fa-fw fas fa-link"></i><span> xiaoxiao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Clovershrub"><i class="fa-fw fas fa-link"></i><span> Clovershrub</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://blog.gaoyucan.site/"><i class="fa-fw fas fa-link"></i><span> gaoyucan</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://demoyao100.github.io/"><i class="fa-fw fas fa-link"></i><span> moyao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://lantern.cool/"><i class="fa-fw fas fa-link"></i><span> lantern</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://mapleqian.github.io/"><i class="fa-fw fas fa-link"></i><span> Serendy</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> about</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">EPs1l0h's Castle</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> home</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/writeup"><i class="fa-fw fas fa-folder-open"></i><span> writeup</span></a></li><li><a class="site-page child" href="/categories/notes"><i class="fa-fw fas fa-folder-open"></i><span> notes</span></a></li><li><a class="site-page child" href="/categories/jottings"><i class="fa-fw fas fa-folder-open"></i><span> jottings</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-link"></i><span> Link</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Here-is-SG"><i class="fa-fw fas fa-link"></i><span> iPlayForSG</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://jameshoi.github.io/"><i class="fa-fw fas fa-link"></i><span> jameshoi</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Only-xiaoxiao"><i class="fa-fw fas fa-link"></i><span> xiaoxiao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Clovershrub"><i class="fa-fw fas fa-link"></i><span> Clovershrub</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://blog.gaoyucan.site/"><i class="fa-fw fas fa-link"></i><span> gaoyucan</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://demoyao100.github.io/"><i class="fa-fw fas fa-link"></i><span> moyao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://lantern.cool/"><i class="fa-fw fas fa-link"></i><span> lantern</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://mapleqian.github.io/"><i class="fa-fw fas fa-link"></i><span> Serendy</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> about</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Android Kernel Patch</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-03-22T10:04:21.000Z" title="发表于 2025-03-22 18:04:21">2025-03-22</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-03-21T10:39:56.000Z" title="更新于 2025-03-21 18:39:56">2025-03-21</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/notes/">notes</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Android Kernel Patch"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="Android-Kernel-Patch"><a href="#Android-Kernel-Patch" class="headerlink" title="Android Kernel Patch"></a>Android Kernel Patch</h1><p>Android逆向中，我们分析app时常常遇到如下问题：</p>
+<ol>
+<li>APP获取了哪些设备信息</li>
+<li>APP怎么检测调试器</li>
+<li>APP怎么检测Frida</li>
+<li>APP怎么检测root环境</li>
+</ol>
+<p>同时在检测到该行为，并定位到具体代码位置后，我们如何去修改设备信息、隐藏调试器、隐藏Frida又是一个问题。</p>
+<p>比如传统方法检测调试器是检查 <code>/proc/pid/status</code> 文件，调试器附加进程后，TracerPid字段的值是调试器的 <code>PID</code> ，要想绕过该反调试，需要解决如下问题：</p>
+<ol>
+<li>如何定位代码</li>
+<li>如何修改绕过，修改里面的 <code>PID</code></li>
+</ol>
+<p>定位代码可以依靠逆向工程或者Frida hook等，但是遇到混淆、SVC等会遇到问题，且针对性不强，不够通用，如果用 <code>frida hook libc</code>的函数，遇到 <code>syscall</code> 时就无法使用了。</p>
+<p>因此，解决问题的关键是如何定位系统调用位置并修改系统调用逻辑。</p>
+<h2 id="Android-Linux-Kernel-定制"><a href="#Android-Linux-Kernel-定制" class="headerlink" title="Android Linux Kernel 定制"></a>Android Linux Kernel 定制</h2><p>这就涉及到 <code>Android Linux Kernel</code> 定制方案，具体如下：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>监测</th>
+<th>修改</th>
+<th>动态加载/卸载</th>
+<th>需要内核源码/头文件/重新编译内核</th>
+<th>开发难度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>内核源码定制</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+<td>是</td>
+<td>中</td>
+</tr>
+<tr>
+<td>ko内核模块</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>中</td>
+</tr>
+<tr>
+<td>eBPF（监测）</td>
+<td>是</td>
+<td>否</td>
+<td>是</td>
+<td>是（有些也不用）</td>
+<td>低</td>
+</tr>
+<tr>
+<td>eBPF（修改）</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>是（默认不能修改返回值）</td>
+<td>高</td>
+</tr>
+<tr>
+<td>Kernel Patch</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+<td>中</td>
+</tr>
+<tr>
+<td>Binary Patch</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>高</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="基于-eBPF-开发的开源工具"><a href="#基于-eBPF-开发的开源工具" class="headerlink" title="基于 eBPF 开发的开源工具"></a>基于 eBPF 开发的开源工具</h3><p><a target="_blank" rel="noopener" href="https://github.com/SeeFlowerX/stackplz">https://github.com/SeeFlowerX/stackplz</a></p>
+<blockquote>
+<p>stackplz是一款基于eBPF的堆栈追踪工具，目前仅适用于Android平台</p>
+<p>特性：</p>
+<ul>
+<li>支持arm64 syscall trace，可以打印参数(包括详细的结构体信息)、调用栈、寄存器</li>
+<li>支持对64位用户态动态库进行uprobe hook，可以打印参数、调用栈、寄存器</li>
+<li>支持硬件断点功能，可以打印调用栈、寄存器，并且提供了frida rpc调用</li>
+<li>支持进程号、线程号、线程名的黑白名单过滤</li>
+<li>支持追踪fork产生的进程</li>
+</ul>
+<p>要求：</p>
+<ul>
+<li>root权限，系统内核版本5.10+（可执行<code>uname -r</code>查看）</li>
+<li>对于4.1x的内核，内核开启了CONFIG_HAVE_HW_BREAKPOINT，硬件断点功能同样可以使用</li>
+</ul>
+<p>不仅仅是真机，这些环境下也可以使用：</p>
+<ul>
+<li>arm开发板刷安卓镜像</li>
+<li>arm开发板/云服务器 + Docker + ReDroid</li>
+<li>Apple M系列设备 + 安卓官方arm64模拟器</li>
+<li>有root权限，内核版本5.10+的云真机也可以</li>
+</ul>
+</blockquote>
+<p>eBPF非常适合做监测类任务，但是不适合做修改类任务：</p>
+<ol>
+<li>很难修改寄存器或参数的值</li>
+<li>很难修改返回值（<code>CONFIG_BPF_KPROBE_OVERRIDE</code> 配置未开）</li>
+<li>对用户态内存只能修改可写内存</li>
+</ol>
+<h3 id="Android-Linux-Kernel-定制工作流"><a href="#Android-Linux-Kernel-定制工作流" class="headerlink" title="Android Linux Kernel 定制工作流"></a>Android Linux Kernel 定制工作流</h3><p>由于eBPF适合监测任务，因此考虑</p>
+<ol>
+<li>用 eBPF（stackplz）进行监测</li>
+<li>分析修改定制逻辑</li>
+<li>编写 APatch kpm 模块 hook 内核</li>
+</ol>
+<h3 id="APatch"><a href="#APatch" class="headerlink" title="APatch"></a>APatch</h3><p><a target="_blank" rel="noopener" href="https://github.com/bmax121/APatch">https://github.com/bmax121/APatch</a></p>
+<ol>
+<li>一种新的 root 方案，基于 Patch 内核实现</li>
+<li>提供内核模块机制，支持动态加载、动态卸载、符号管理等</li>
+<li>提供 <code>syscall hook, inline hook</code> 接口，方便定制修改内核</li>
+<li>核心是 Kernel Patch</li>
+</ol>
+<h2 id="安装-Kernel-Patch"><a href="#安装-Kernel-Patch" class="headerlink" title="安装 Kernel Patch"></a>安装 Kernel Patch</h2><h3 id="Linux-Kernel-基础知识"><a href="#Linux-Kernel-基础知识" class="headerlink" title="Linux Kernel 基础知识"></a>Linux Kernel 基础知识</h3><ul>
+<li>android源码在线搜索：<a target="_blank" rel="noopener" href="https://cs.android.com/">Android Code Search</a></li>
+<li>系统调用<ul>
+<li>用户态与内核态交互的接口</li>
+<li>AARCH64指令集使用 SVC 指令调用系统调用函数</li>
+<li><code>x8</code>寄存器传递系统调用号，<a target="_blank" rel="noopener" href="https://arm64.syscall.sh/">系统调用表：https://arm64.syscall.sh/</a></li>
+</ul>
+</li>
+<li>kpm内核模块需要调用和hook某些内核函数</li>
+<li>使用目标函数的符号名来找到其函数地址：<code>kallsyms_lookup_name</code>，位于 <code>##include &lt;linux/kallsyms.h&gt;</code></li>
+<li><p>使用 <code>zcat /proc/config.gz | grep -w CONFIG_KALLSYMS</code> 查看设备是否有内核符号导出</p>
+<p>  <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1739279267926.png" alt="QQ_1739279267926.png"></p>
+</li>
+<li><p>获取所有导出符号 <code>cat proc/kallsyms</code></p>
+</li>
+<li><p>查找某个符号是否导出 <code>cat proc/kallsyms | grep proc_task_name</code></p>
+<p>  <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1739279400762.png" alt="QQ_1739279400762.png"></p>
+</li>
+</ul>
+<h3 id="内核镜像逆向"><a href="#内核镜像逆向" class="headerlink" title="内核镜像逆向"></a>内核镜像逆向</h3><p>为什么需要逆向Linux Kernel：</p>
+<ol>
+<li>不一定找到对应的源码</li>
+<li>设备内核可能内联了某些函数没法 hook</li>
+<li>源码/反编译对照</li>
+</ol>
+<p>步骤（设备是 Pixel 6 pro）：</p>
+<ol>
+<li><p>提取 boot.img：查看 boot 挂载点 <code>ls /dev/block/bootdevice/by-name -l | grep boot</code>，由前面的分析我们知道Android会把厂商部分和系统部分分开，我们关注 <code>boot_a, boot_b</code> 即可，可以看出分别被挂载在 <code>sda13, sda21</code> 两个块设备中。</p>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1739279767093.png" alt="QQ_1739279767093.png"></p>
+</li>
+<li><p>提取镜像文件：使用 <code>dd if=/dev/block/sda13 of=/sdcard/Download/boot_a.img</code> 提取 <code>boot_a.img</code> ，再用相同的方法提取 <code>boot_b.img</code></p>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1739280912502.png" alt="QQ_1739280912502.png"></p>
+</li>
+<li><p>解压镜像文件提取 kernel：用 <code>magiskboot</code>工具解包内核镜像文件 <a target="_blank" rel="noopener" href="https://github.com/svoboda18/magiskboot：`magiskboot">https://github.com/svoboda18/magiskboot：`magiskboot</a> unpack boot_a.img<code>，解压得到</code>kernel<code>文件和</code>ramdisk.cpio<code>文件，我们重点关注</code>kernel` 二进制文件</p>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1739282212151.png" alt="QQ_1739282212151.png"></p>
+</li>
+<li><p>重建符号表：用<a target="_blank" rel="noopener" href="https://github.com/marin-m/vmlinux-to-elf把我们得到的镜像文件转化成ELF文件（Linux环境）`./vmlinux-to-elf">https://github.com/marin-m/vmlinux-to-elf把我们得到的镜像文件转化成ELF文件（Linux环境）`./vmlinux-to-elf</a> kernel kernel_a.elf`，并得到带符号的内核文件</p>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1739289681893.png" alt="QQ_1739289681893.png"></p>
+</li>
+<li><p>IDA载入：把 <code>kernel_a.elf</code> 拖入IDA，等待许久，内核文件符号表已全部恢复</p>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1739289859498.png" alt="QQ_1739289859498.png"></p>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1739289905518.png" alt="QQ_1739289905518.png"></p>
+</li>
+</ol>
+<p>如果是模拟器只需要三步：</p>
+<ol>
+<li>直接在宿主文件系统里面找到 <code>kernel</code>文件（该文件是<code>gz</code>压缩后的）</li>
+<li>添加 <code>gz</code>后缀并解压</li>
+<li>用 <code>vmlinux-to-elf</code>处理得到 <code>elf</code>文件</li>
+</ol>
+<h4 id="APatch修补"><a href="#APatch修补" class="headerlink" title="APatch修补"></a>APatch修补</h4><p>方法一：APatch UI 一键修补</p>
+<p>方法二：<code>magiskboot unpack boot.img → kptools修补 → magiskbook repack boot.img</code></p>
+<p>然后执行<code>fastboot flash boot boot.img</code></p>
+<h2 id="Kernel-Patch-开发"><a href="#Kernel-Patch-开发" class="headerlink" title="Kernel Patch 开发"></a>Kernel Patch 开发</h2><h3 id="开发环境"><a href="#开发环境" class="headerlink" title="开发环境"></a>开发环境</h3><p>Ubuntu22.04+ clangd + bear + arm-gnu-toolchain</p>
+<p>arm64交叉编译工具链下载地址：<a target="_blank" rel="noopener" href="https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads">Arm GNU Toolchain Downloads – Arm Developer</a> 找到对应平台的即可，我这里使用的是 AArch64 bare-metal target (aarch64-none-elf)</p>
+<p>编译时临时添加环境变量 <code>export TARGET_COMPILE=/home/ep/Desktop/arm-gnu-toolchain-14.2/bin/aarch64-none-elf-</code>即可。</p>
+<p>第一次编译使用 <code>bear -- make -B</code> 生成 <code>compile_commands.json</code> 文件辅助 clangd即可（可以把makefile里面的TARGET_COMPILE去掉先用gcc编译然后再用交叉编译。</p>
+<p>之后可以直接执行 <code>make push</code> 推送到手机设备。</p>
+<h3 id="入口函数解析"><a href="#入口函数解析" class="headerlink" title="入口函数解析"></a>入口函数解析</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> <span class="type">long</span> <span class="title">eps1l0h_hide_init</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *args, <span class="type">const</span> <span class="type">char</span> *event, <span class="type">void</span> *__user reserved)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide init, event: %s, args: %s\n&quot;</span>, event, args);</span><br><span class="line">    <span class="built_in">pr_info</span>(<span class="string">&quot;kernelpatch version: %x\n&quot;</span>, kpver);</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide install\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">long</span> <span class="title">eps1l0h_hide_control0</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *args, <span class="type">char</span> *__user out_msg, <span class="type">int</span> outlen)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide control0, args: %s\n&quot;</span>, args);</span><br><span class="line">    <span class="type">char</span> echo[<span class="number">64</span>] = <span class="string">&quot;echo: &quot;</span>;</span><br><span class="line">    <span class="built_in">strncat</span>(echo, args, <span class="number">48</span>);</span><br><span class="line">    <span class="built_in">compat_copy_to_user</span>(out_msg, echo, <span class="built_in">sizeof</span>(echo));</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">long</span> <span class="title">eps1l0h_hide_control1</span><span class="params">(<span class="type">void</span> *a1, <span class="type">void</span> *a2, <span class="type">void</span> *a3)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide control1, a1: %llx, a2: %llx, a3: %llx\n&quot;</span>, a1, a2, a3);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">long</span> <span class="title">eps1l0h_hide_exit</span><span class="params">(<span class="type">void</span> *__user reserved)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide exit\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">KPM_INIT</span>(eps1l0h_hide_init); <span class="comment">// 装载回调</span></span><br><span class="line"><span class="built_in">KPM_CTL0</span>(eps1l0h_hide_control0); <span class="comment">// 控制0回调</span></span><br><span class="line"><span class="built_in">KPM_CTL1</span>(eps1l0h_hide_control1); <span class="comment">// 控制1回调</span></span><br><span class="line"><span class="built_in">KPM_EXIT</span>(eps1l0h_hide_exit); <span class="comment">// 卸载回调</span></span><br></pre></td></tr></table></figure>
+<p>比较重要的就是 <code>eps1l0h_hide_init</code> 装载回调，用来在里面添加hook代码，在 <code>eps1l0h_hide_exit</code> 卸载回调里面清除回调并释放内存等。控制 0/1 回调涉及到用户控制，先不管。</p>
+<h3 id="用-Kernel-Patch-hook-系统调用"><a href="#用-Kernel-Patch-hook-系统调用" class="headerlink" title="用 Kernel Patch hook 系统调用"></a>用 Kernel Patch hook 系统调用</h3><h4 id="kpm-安装syscall-hook"><a href="#kpm-安装syscall-hook" class="headerlink" title="kpm 安装syscall hook"></a>kpm 安装syscall hook</h4><p>安装</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">hook_err_t</span> <span class="title">fp_hook_syscalln</span><span class="params">(<span class="type">int</span> nr, <span class="type">int</span> narg, <span class="type">void</span> *before, <span class="type">void</span> *after, <span class="type">void</span> *udata)</span></span></span><br><span class="line"><span class="function"><span class="comment">/*</span></span></span><br><span class="line"><span class="comment"><span class="function">nr：系统调用号</span></span></span><br><span class="line"><span class="comment"><span class="function">narg：参数个数</span></span></span><br><span class="line"><span class="comment"><span class="function">before：系统调用执行前回调</span></span></span><br><span class="line"><span class="comment"><span class="function">after：系统调用执行后回调</span></span></span><br><span class="line"><span class="comment"><span class="function">*/</span></span></span><br></pre></td></tr></table></figure>
+<p>卸载</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">hook_err_t</span> <span class="title">fp_unhook_syscall</span><span class="params">(<span class="type">int</span> nr, <span class="type">void</span> *before, <span class="type">void</span> *after)</span></span></span><br><span class="line"><span class="function"><span class="comment">/*</span></span></span><br><span class="line"><span class="comment"><span class="function">nr：系统调用号</span></span></span><br><span class="line"><span class="comment"><span class="function">before：系统调用执行前回调</span></span></span><br><span class="line"><span class="comment"><span class="function">after：系统调用执行后回调</span></span></span><br><span class="line"><span class="comment"><span class="function">*/</span></span></span><br></pre></td></tr></table></figure>
+<h4 id="hook-openat"><a href="#hook-openat" class="headerlink" title="hook openat"></a>hook openat</h4><p><img src="/2025/03/22/Android%20Kernel%20Patch/image.png" alt="image.png"></p>
+<ul>
+<li>libc/java 提供的文件操作最终都会走 <code>openat</code> 系统调用打开某个文件，比如检测 <code>status / maps</code> 文件，通常都是走这个系统调用</li>
+<li>其系统调用号为 <code>56</code>，有四个参数，我们关注第二个参数 <code>*filename</code></li>
+</ul>
+<p>开发流程：</p>
+<ol>
+<li>在src目录下添加 <code>svc_hook.c, svc_hook.h</code> 文件，在makefile文件中添加 <code>BASE_SRC += ./src/svc_hook.c</code></li>
+<li><p>定义 <code>svc_hook_openat_install, svc_hook_openat_uninstall</code> ，在 <code>main.c</code> 中调用，负责模块的安装和卸载，安装用到之前提到的<code>fp_hook_syscalln, fp_unhook_syscall</code>，逻辑如下：</p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">svc_hook_example_install</span><span class="params">(<span class="type">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide: svc_hook_example_install\n&quot;</span>);</span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    __task_pid_nr_ns是一个内核函数，用来获取task信息，即pid，tgid等</span></span><br><span class="line"><span class="comment">     其被定义成函数指针</span></span><br><span class="line"><span class="comment">		enum pid_type</span></span><br><span class="line"><span class="comment">		&#123;</span></span><br><span class="line"><span class="comment">		    PIDTYPE_PID,</span></span><br><span class="line"><span class="comment">		    PIDTYPE_TGID,</span></span><br><span class="line"><span class="comment">		    PIDTYPE_PGID,</span></span><br><span class="line"><span class="comment">		    PIDTYPE_SID,</span></span><br><span class="line"><span class="comment">		    PIDTYPE_MAX,</span></span><br><span class="line"><span class="comment">		&#125;;</span></span><br><span class="line"><span class="comment">		struct pid_namespace;</span></span><br><span class="line"><span class="comment">    pid_t (*__task_pid_nr_ns)(struct task_struct *task, enum pid_type type, struct pid_namespace *ns) = 0;</span></span><br><span class="line"><span class="comment">    初始化的时候根据符号来获取其地址</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    __task_pid_nr_ns = (<span class="type">void</span> *)<span class="built_in">kallsyms_lookup_name</span>(<span class="string">&quot;__task_pid_nr_ns&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span>(!__task_pid_nr_ns) &#123;</span><br><span class="line">        <span class="built_in">pr_warn</span>(<span class="string">&quot;eps1l0h-hide: __task_pid_nr_ns not found\n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">		</span><br><span class="line">		<span class="comment">// fp_hook_syscalln 安装模块，__NR_openat是openat的系统调用号宏定义，其有4个参数，before_openat和after_openat是hook函数，NULL是数据</span></span><br><span class="line">    <span class="type">hook_err_t</span> err = <span class="built_in">fp_hook_syscalln</span>(__NR_openat, <span class="number">4</span>, before_openat, after_openat, <span class="literal">NULL</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// hook_openat_status 表示是否正在执行hook逻辑</span></span><br><span class="line">    <span class="comment">// 其定义 int hook_openat_status = 0</span></span><br><span class="line">    <span class="keyword">if</span> (err) &#123;</span><br><span class="line">        <span class="built_in">pr_err</span>(<span class="string">&quot;eps1l0h-hide: hook openat error: %d\n&quot;</span>, err);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        hook_openat_status = <span class="number">1</span>;</span><br><span class="line">        <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide: hook openat success\n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">svc_hook_example_uninstall</span><span class="params">(<span class="type">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide: svc_hook_example_uninstall\n&quot;</span>);</span><br><span class="line">    </span><br><span class="line">		<span class="comment">// 根据 hook_openat_status 执行 fp_unhook_syscall</span></span><br><span class="line">    <span class="keyword">if</span> (hook_openat_status) &#123;</span><br><span class="line">        <span class="built_in">fp_unhook_syscall</span>(__NR_openat, before_openat, after_openat);</span><br><span class="line">        hook_openat_status = <span class="number">0</span>;</span><br><span class="line">        <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide: unhook openat success\n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>下面开始写 <code>before_openat, after_openat</code> 两个回调函数，重点是 <code>before_openat</code></p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// hook_fargs4_t是一个结构体，表示有4个参数，由于是内核态读用户态参数，需要用syscall_argn读取，字符串用compat_strncpy_from_user进一步读取</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">before_openat</span><span class="params">(<span class="type">hook_fargs4_t</span> *args, <span class="type">void</span> *udata)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide: before_openat\n&quot;</span>);</span><br><span class="line">		<span class="comment">// 重点是读取openat的第一个参数filename，注意这里是用户态的指针，要加上__user进行区分</span></span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> __user *filename = (<span class="type">const</span> <span class="type">char</span> __user *)<span class="built_in">syscall_argn</span>(args, <span class="number">1</span>);</span><br><span class="line">    <span class="comment">// int fd = (int)syscall_arng(args, 0);</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(!filename) <span class="keyword">return</span>;</span><br><span class="line">		<span class="comment">// 进一步读取用户态指针的内容存入buf</span></span><br><span class="line">    <span class="type">char</span> buf[<span class="number">1024</span>];</span><br><span class="line">    <span class="built_in">compat_strncpy_from_user</span>(buf, filename, <span class="built_in">sizeof</span>(buf)); </span><br><span class="line">		</span><br><span class="line">		<span class="comment">// 获取当前进程，current是get_current()的宏定义</span></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">task_struct</span> *task = current;</span><br><span class="line">    <span class="type">pid_t</span> pid = <span class="number">-1</span>, tgid = <span class="number">-1</span>;</span><br><span class="line">    <span class="keyword">if</span> (__task_pid_nr_ns) &#123;</span><br><span class="line">        pid = __task_pid_nr_ns(task, PIDTYPE_PID, <span class="number">0</span>); <span class="comment">// 获取pid</span></span><br><span class="line">        tgid = __task_pid_nr_ns(task, PIDTYPE_TGID, <span class="number">0</span>); <span class="comment">// 获取tgid</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果字符串是backdoor-skip就修改返回值和skip_origin</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">strstr</span>(buf, <span class="string">&quot;backdoor-skip&quot;</span>)) &#123;</span><br><span class="line">        <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide: before_openat, filename: %s, pid: %d, tgid: %d, skip\n&quot;</span>, buf, pid, tgid);</span><br><span class="line">        args-&gt;ret = <span class="number">-1</span>;</span><br><span class="line">        args-&gt;skip_origin = <span class="number">1</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide: before_openat, filename: %s, pid: %d, tgid: %d\n&quot;</span>, buf, pid, tgid);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>测试步骤：</p>
+<ol>
+<li><p>添加环境变量 <code>export TARGET_COMPILE=/home/ep/Desktop/arm-gnu-toolchain-14.2/bin/aarch64-none-elf-</code>，运行 <code>make push</code> 推送到手机 sdcard</p>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740148649827.png" alt="QQ_1740148649827.png"></p>
+</li>
+<li><p>打开 Apatch，加载写好的kpm模块，运行 <code>adb logcat | grep eps1l0h-hide</code> 查看是否安装成功</p>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740148688478.png" alt="QQ_1740148688478.png"></p>
+</li>
+<li><p>但是我们发现这些日志都是Apatch的用户态日志，由于我们在kpm模块中打印的都是内核日志，所以无法使用logcat获取，需要获取root权限后使用 <code>cat /proc/kmsg | grep eps1l0h-hide</code> 。这时候就会发现输出了一万行日志，都是我们hook的信息。</p>
+<blockquote>
+<p>代码中使用的 <code>pr_info</code> 是 <strong>内核级打印函数</strong>（底层基于 <code>printk</code>），其输出直接写入 <strong>内核环形缓冲区</strong>，而 <code>logcat</code> 仅捕获用户空间（Android应用层）的日志。</p>
+</blockquote>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740148841767.png" alt="QQ_1740148841767.png"></p>
+</li>
+<li><p>进入 <code>data/local/tmp</code> ，尝试创建 <code>backdoor-skip</code> 文件，我们对该文件进行了处理，如果匹配到该文件名就直接跳过 <code>openat</code> 的调用，尝试发现无法创建该文件，而其他名字的文件都可以创建</p>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740149045475.png" alt="QQ_1740149045475.png"></p>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740149059978.png" alt="QQ_1740149059978.png"></p>
+</li>
+</ol>
+<h3 id="用-Kernel-Patch-隐藏调试器特征"><a href="#用-Kernel-Patch-隐藏调试器特征" class="headerlink" title="用 Kernel Patch 隐藏调试器特征"></a>用 Kernel Patch 隐藏调试器特征</h3><h4 id="常见的-debugger-check-方法"><a href="#常见的-debugger-check-方法" class="headerlink" title="常见的 debugger check 方法"></a>常见的 debugger check 方法</h4><ol>
+<li><p><code>/proc/pid/status</code> 的 <code>TracerPid</code>字段，该字段的生成相关代码如下：</p>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740502897674.png" alt="QQ_1740502897674.png"></p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">seq_file</span> &#123; <span class="comment">// 关注该结构体的前四个字段，seq_file是一个很重要的字符串缓冲区</span></span><br><span class="line">	<span class="type">char</span> *buf; <span class="comment">// 指向内存</span></span><br><span class="line">	<span class="type">size_t</span> size; <span class="comment">// 表示最大内存空间</span></span><br><span class="line">	<span class="type">size_t</span> from;</span><br><span class="line">	<span class="type">size_t</span> count; <span class="comment">// 表示长度</span></span><br><span class="line">	<span class="type">size_t</span> pad_until;</span><br><span class="line">	<span class="type">loff_t</span> index;</span><br><span class="line">	<span class="type">loff_t</span> read_pos;</span><br><span class="line">	<span class="keyword">struct</span> <span class="title class_">mutex</span> lock;</span><br><span class="line">	<span class="type">const</span> <span class="keyword">struct</span> <span class="title class_">seq_operations</span> *op;</span><br><span class="line">	<span class="type">int</span> poll_event;</span><br><span class="line">	<span class="type">const</span> <span class="keyword">struct</span> <span class="title class_">file</span> *file;</span><br><span class="line">	<span class="type">void</span> *<span class="keyword">private</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="keyword">inline</span> <span class="type">void</span> <span class="title">task_state</span><span class="params">(<span class="keyword">struct</span> seq_file *m, <span class="keyword">struct</span> pid_namespace *ns,</span></span></span><br><span class="line"><span class="params"><span class="function">				<span class="keyword">struct</span> pid *pid, <span class="keyword">struct</span> task_struct *p)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">struct</span> <span class="title class_">user_namespace</span> *user_ns = <span class="built_in">seq_user_ns</span>(m);</span><br><span class="line">	...</span><br><span class="line">	</span><br><span class="line">	tracer = <span class="built_in">ptrace_parent</span>(p);</span><br><span class="line">	<span class="keyword">if</span> (tracer)</span><br><span class="line">		tpid = <span class="built_in">task_pid_nr_ns</span>(tracer, ns);</span><br><span class="line"></span><br><span class="line">	tgid = <span class="built_in">task_tgid_nr_ns</span>(p, ns);</span><br><span class="line">	ngid = <span class="built_in">task_numa_group_id</span>(p);</span><br><span class="line">	cred = <span class="built_in">get_task_cred</span>(p);</span><br><span class="line">	</span><br><span class="line">	...</span><br><span class="line"></span><br><span class="line">	<span class="built_in">seq_put_decimal_ull</span>(m, <span class="string">&quot;\nTracerPid:\t&quot;</span>, tpid); <span class="comment">// 该字段就是TracerPid</span></span><br><span class="line">	</span><br><span class="line">	...</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">proc_pid_status</span><span class="params">(<span class="keyword">struct</span> seq_file *m, <span class="keyword">struct</span> pid_namespace *ns,</span></span></span><br><span class="line"><span class="params"><span class="function">			<span class="keyword">struct</span> pid *pid, <span class="keyword">struct</span> task_struct *task)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">struct</span> <span class="title class_">mm_struct</span> *mm = <span class="built_in">get_task_mm</span>(task);</span><br><span class="line"></span><br><span class="line">	<span class="built_in">seq_puts</span>(m, <span class="string">&quot;Name:\t&quot;</span>);</span><br><span class="line">	<span class="built_in">proc_task_name</span>(m, task, <span class="literal">true</span>);</span><br><span class="line">	<span class="built_in">seq_putc</span>(m, <span class="string">&#x27;\n&#x27;</span>);</span><br><span class="line"></span><br><span class="line">	<span class="built_in">task_state</span>(m, ns, pid, task);</span><br><span class="line">	...</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>/proc/pid/status</code> 的 <code>State</code> 字段，<code>get_task_state</code>从<code>task_state_array</code>获取静态字符串，相关代码如下，重点关注 <code>t (tracing stop)</code></p>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740502897674%201.png" alt="QQ_1740502897674.png"></p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">const</span> <span class="type">char</span> * <span class="type">const</span> task_state_array[] = &#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* states in TASK_REPORT: */</span></span><br><span class="line">	<span class="string">&quot;R (running)&quot;</span>,		<span class="comment">/* 0x00 */</span></span><br><span class="line">	<span class="string">&quot;S (sleeping)&quot;</span>,		<span class="comment">/* 0x01 */</span></span><br><span class="line">	<span class="string">&quot;D (disk sleep)&quot;</span>,	<span class="comment">/* 0x02 */</span></span><br><span class="line">	<span class="string">&quot;T (stopped)&quot;</span>,		<span class="comment">/* 0x04 */</span></span><br><span class="line">	<span class="string">&quot;t (tracing stop)&quot;</span>,	<span class="comment">/* 0x08 */</span></span><br><span class="line">	<span class="string">&quot;X (dead)&quot;</span>,		<span class="comment">/* 0x10 */</span></span><br><span class="line">	<span class="string">&quot;Z (zombie)&quot;</span>,		<span class="comment">/* 0x20 */</span></span><br><span class="line">	<span class="string">&quot;P (parked)&quot;</span>,		<span class="comment">/* 0x40 */</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">/* states beyond TASK_REPORT: */</span></span><br><span class="line">	<span class="string">&quot;I (idle)&quot;</span>,		<span class="comment">/* 0x80 */</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">	<span class="built_in">seq_puts</span>(m, <span class="string">&quot;State:\t&quot;</span>);</span><br><span class="line">	<span class="built_in">seq_puts</span>(m, <span class="built_in">get_task_state</span>(p));</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>proc/pod/wchan</code> ，<code>wchan</code>文件内容是内核中进程休眠位置对应的符号名称，比如等待调试器就是<code>ptrace_stop</code>，正常情况是字符<code>&quot;0&quot;</code> ，或者就是调试器的符号名称，具体如下：</p>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740502775930.png" alt="QQ_1740502775930.png"></p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> <span class="type">int</span> <span class="title">proc_pid_wchan</span><span class="params">(<span class="keyword">struct</span> seq_file *m, <span class="keyword">struct</span> pid_namespace *ns,</span></span></span><br><span class="line"><span class="params"><span class="function">			  <span class="keyword">struct</span> pid *pid, <span class="keyword">struct</span> task_struct *task)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">long</span> wchan;</span><br><span class="line">	<span class="type">char</span> symname[KSYM_NAME_LEN];</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!<span class="built_in">ptrace_may_access</span>(task, PTRACE_MODE_READ_FSCREDS))</span><br><span class="line">		<span class="keyword">goto</span> print0;</span><br><span class="line"></span><br><span class="line">	wchan = <span class="built_in">get_wchan</span>(task);</span><br><span class="line">	<span class="keyword">if</span> (wchan &amp;&amp; !<span class="built_in">lookup_symbol_name</span>(wchan, symname)) &#123;</span><br><span class="line">		<span class="built_in">seq_puts</span>(m, symname);</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">print0:</span><br><span class="line">	<span class="built_in">seq_putc</span>(m, <span class="string">&#x27;0&#x27;</span>);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;`</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>proc/pid/stat</code> 或  <code>ps -A</code>，箭头所指的字段正常是<code>R</code>，挂上调试器就是<code>t</code> ，该字段通过<code>do_task_stat</code> 获得，关键代码如下，<code>state</code>字段就在 <code>(proc_task_name)</code> 字段后面</p>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740503054606.png" alt="QQ_1740503054606.png"></p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> <span class="type">int</span> <span class="title">do_task_stat</span><span class="params">(<span class="keyword">struct</span> seq_file *m, <span class="keyword">struct</span> pid_namespace *ns, <span class="keyword">struct</span> pid *pid, <span class="keyword">struct</span> task_struct *task, <span class="type">int</span> whole)</span> </span>&#123;</span><br><span class="line">	...</span><br><span class="line">	<span class="built_in">seq_puts</span>(m, <span class="string">&quot; (&quot;</span>);</span><br><span class="line">	<span class="built_in">proc_task_name</span>(m, task, <span class="literal">false</span>);</span><br><span class="line">	<span class="built_in">seq_puts</span>(m, <span class="string">&quot;) &quot;</span>);</span><br><span class="line">	<span class="built_in">seq_putc</span>(m, state);</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h4 id="hook-seq-put-decimal-ull-函数过-TracerPid-检测"><a href="#hook-seq-put-decimal-ull-函数过-TracerPid-检测" class="headerlink" title="hook seq_put_decimal_ull 函数过 TracerPid 检测"></a>hook seq_put_decimal_ull 函数过 TracerPid 检测</h4><p>在 <code>task_state</code> 函数中，系统通过 <code>seq_put_decimal_ull</code>  来获取，该函数是和内核导出函数，可以通过符号来获取其运行时地址并对其进行 hook</p>
+<p><img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740392570950.png" alt="QQ_1740392570950.png"></p>
+<p>其函数定义为 </p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">seq_put_decimal_ull</span><span class="params">(<span class="keyword">struct</span> seq_file *m, <span class="type">const</span> <span class="type">char</span> *delimiter, <span class="type">unsigned</span> <span class="type">long</span> <span class="type">long</span> num)</span></span></span><br></pre></td></tr></table></figure>
+<p>在 <code>task_state</code> 中的调用为</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">seq_put_decimal_ull</span>(m, <span class="string">&quot;\nTracerPid:\t&quot;</span>, tpid);</span><br></pre></td></tr></table></figure>
+<p>因此只需要先检测第二个参数是否为 <code>TracerPid</code> ，然后再修改其第三个参数，也就是 <code>tpid</code> 的值即可。</p>
+<p>获取函数地址可以用 <code>kallsyms_lookup_name</code> 函数，再用 <code>hook_warp3</code> 对<code>seq_put_decimal_ull</code>修改第三个参数即可。</p>
+<p>但是加载完模块以后发现根本就没调用，这就需要结合之前提取的内核文件的逆向结果来进行分析了，可以看出在我们这个镜像里 <code>tsak_state</code> 函数是没有执行<code>before_seq_put_decimal_ull</code>的，而是直接调用了<code>before_seq_put_decimal_ull_width</code>，那么我们直接对<code>before_seq_put_decimal_ull_width</code>进行hook即可。</p>
+<p><img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740551351552.png" alt="QQ_1740551351552.png"></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 比较第二个参数，同时为了避免没有附加调试器的情况需要判断 fargs-&gt;arg2 != 0</span></span><br><span class="line"><span class="comment">// 由于是内核导出函数，所以参数也是内核态，直接调用即可</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">before_seq_put_decimal_ull_width</span><span class="params">(<span class="type">hook_fargs4_t</span> *fargs, <span class="type">void</span> *udata)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">strcmp</span>((<span class="type">char</span> *)fargs-&gt;arg1, <span class="string">&quot;\nTracerPid:\t&quot;</span>) == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide: before_seq_put_decimal_ull_width, TracerPid: %d\t\n&quot;</span>, fargs-&gt;arg2);</span><br><span class="line">        fargs-&gt;arg2 = <span class="number">0</span>;   </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *seq_put_decimal_ull = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">debugger_hide_install</span><span class="params">(<span class="type">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide: debugger_hide_install\n&quot;</span>);</span><br><span class="line">		<span class="comment">// 获取目标函数地址</span></span><br><span class="line">    seq_put_decimal_ull_width= (<span class="type">void</span> *)<span class="built_in">kallsyms_lookup_name</span>(<span class="string">&quot;seq_put_decimal_ull_width&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!seq_put_decimal_ull_width) &#123;</span><br><span class="line">        <span class="built_in">pr_warn</span>(<span class="string">&quot;eps1l0h-hide: seq_put_decimal_ull_widthnot found\n&quot;</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="type">hook_err_t</span> err = <span class="built_in">hook_wrap4</span>(seq_put_decimal_ull_width, before_seq_put_decimal_ull, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">        <span class="keyword">if</span> (err) &#123;</span><br><span class="line">            <span class="built_in">pr_err</span>(<span class="string">&quot;eps1l0h-hide: hook seq_put_decimal_ull_widthfailed\n&quot;</span>);</span><br><span class="line">            seq_put_decimal_ull_width= <span class="literal">NULL</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">debugger_hide_uninstall</span><span class="params">(<span class="type">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (seq_put_decimal_ull_width) &#123;</span><br><span class="line">        <span class="built_in">unhook</span>(seq_put_decimal_ull_width);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>随意打开一个app，并挂上任意一个调试器，使用 <code>cat /proc/pid/status</code> 查看其 <code>TracerPid</code> ，并关注调试信息，发现调试信息中原本的 <code>TracerPid</code> 字段为  15498，但是查询出来变成了 0，说明hook成功。</p>
+<p><img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740484871424.png" alt="QQ_1740484871424.png"></p>
+<p><img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740484883407.png" alt="QQ_1740484883407.png"></p>
+<p><img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740484904173.png" alt="QQ_1740484904173.png"></p>
+<h4 id="hook-seq-puts-函数过-State-检测"><a href="#hook-seq-puts-函数过-State-检测" class="headerlink" title="hook seq_puts 函数过 State 检测"></a>hook seq_puts 函数过 State 检测</h4><p>根据前面的分析， <code>State</code>字段是获取如下，那么只要 hook 了seq_puts 函数，查看是否是<code>&quot;t (tracing stop)&quot;,    /* 0x08 */</code>，然后将其修改为<code>&quot;S (sleeping)&quot;,        /* 0x01 */</code>即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">seq_puts(m, &quot;State:\\t&quot;);</span><br><span class="line">seq_puts(m, get_task_state(p));</span><br></pre></td></tr></table></figure>
+<p>具体实现如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">before_seq_puts</span><span class="params">(<span class="type">hook_fargs2_t</span> *fargs, <span class="type">void</span> *udata)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide: before_seq_puts, %s\n&quot;</span>, (<span class="type">const</span> <span class="type">char</span>*)fargs-&gt;arg1);</span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">strcmp</span>((<span class="type">const</span> <span class="type">char</span>*)fargs-&gt;arg1, <span class="string">&quot;t (tracing stop)&quot;</span>) == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide: before_seq_puts, t (tracing stop)\n&quot;</span>);</span><br><span class="line">        <span class="built_in">strcpy</span>((<span class="type">char</span> *)fargs-&gt;arg1, <span class="string">&quot;S (sleeping)&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>但是由于在测试机提取的内核文件中获取该字段的方法被内联了，所以暂时还无法进行 hook。</p>
+<h4 id="hook-proc-pid-wchan-函数过-wchan-检测"><a href="#hook-proc-pid-wchan-函数过-wchan-检测" class="headerlink" title="hook proc_pid_wchan 函数过 wchan 检测"></a>hook proc_pid_wchan 函数过 wchan 检测</h4><p><code>proc_pid_wchan</code>函数不是很好hook，因为 <code>ptrace_may_access</code> 如果随便hook会把系统搞崩，而且输入的参数也不好控制，注意到函数定义，其最后把结果存在了 <code>struct seq_file *m</code> 里面，这个<code>seq_file</code> 之前有提到过，<a target="_blank" rel="noopener" href="https://www.notion.so/Android-Kernel-Patch-197020833d4f8038bb68e1ad9ce5980e?pvs=21">在这里</a></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> <span class="type">int</span> <span class="title">proc_pid_wchan</span><span class="params">(<span class="keyword">struct</span> seq_file *m, <span class="keyword">struct</span> pid_namespace *ns, <span class="keyword">struct</span> pid *pid, <span class="keyword">struct</span> task_struct *task)</span> </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="built_in">seq_puts</span>(m, symname);</span><br><span class="line">  ...</span><br><span class="line">  <span class="built_in">seq_putc</span>(m, <span class="string">&#x27;0&#x27;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而 <code>seq_puts</code> 函数最后会调用 <code>seq_write</code>  函数把数据写到 <code>struct seq_file *m</code> 里，可以看到写入的名称有多长，<code>count</code>变量就是多大。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">seq_write</span><span class="params">(<span class="keyword">struct</span> seq_file *seq, <span class="type">const</span> <span class="type">void</span> *data, <span class="type">size_t</span> len)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (seq-&gt;count + len &lt; seq-&gt;size) &#123;</span><br><span class="line">		<span class="built_in">memcpy</span>(seq-&gt;buf + seq-&gt;count, data, len);</span><br><span class="line">		seq-&gt;count += len;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">seq_set_overflow</span>(seq);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那么我们可以直接在函数执行后修改 <code>struct seq_file *m</code> 中的值，如果监测到 <code>m-&gt;buf</code> 为 <code>ptrace_stop</code>，就直接改为  <code>&quot;0&quot;</code> </p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">after_proc_pid_wchan</span><span class="params">(<span class="type">hook_fargs4_t</span> *fargs, <span class="type">void</span> *udata)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">seq_file</span> *m = (<span class="keyword">struct</span> seq_file *)fargs-&gt;arg0;</span><br><span class="line">    <span class="keyword">if</span> (m &amp;&amp; m-&gt;buf) &#123;</span><br><span class="line">        <span class="keyword">if</span>(<span class="built_in">strcmp</span>((<span class="type">char</span> *)m-&gt;buf, <span class="string">&quot;ptrace_stop&quot;</span>) == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide: after_proc_pid_wchan, ptrace_stop\n&quot;</span>);</span><br><span class="line">            <span class="built_in">strcpy</span>(m-&gt;buf, <span class="string">&quot;0&quot;</span>);</span><br><span class="line">            m-&gt;count = <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>挂上调试器测试，执行 <code>cat /proc/pid/wchan</code>，返回 <code>&quot;0&quot;</code>，同时弹出日志，说明hook成功。</p>
+<p><img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740552328908.png" alt="QQ_1740552328908.png"></p>
+<p><img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740552355106.png" alt="QQ_1740552355106.png"></p>
+<h4 id="hook-do-task-stat-函数过-stat-检测"><a href="#hook-do-task-stat-函数过-stat-检测" class="headerlink" title="hook do_task_stat 函数过 stat 检测"></a>hook do_task_stat 函数过 stat 检测</h4><p>由于该函数中是 <code>seq_putc</code> 获得的字段，只用了一个字符，不像 <code>&quot;t (tracing stop)&quot;</code>这么有区分度，所以入参判断需要注意一下，考虑到其前面必然跟着 <code>&quot;) &quot;</code>，可以基于此来进行 hook。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">after_do_task_stat</span><span class="params">(<span class="type">hook_fargs5_t</span> *fargs, <span class="type">void</span> *udata)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">seq_file</span> *m = (<span class="keyword">struct</span> seq_file *)fargs-&gt;arg0;</span><br><span class="line">    <span class="keyword">if</span> (m &amp;&amp; m-&gt;buf) &#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">size_t</span> i = <span class="number">0</span>; i + <span class="number">2</span> &lt; m-&gt;count; i++) &#123;</span><br><span class="line">            <span class="keyword">if</span>(m-&gt;buf[i] == <span class="string">&#x27;)&#x27;</span> &amp;&amp; m-&gt;buf[i + <span class="number">1</span>] == <span class="string">&#x27; &#x27;</span> &amp;&amp; m-&gt;buf[i + <span class="number">2</span>] == <span class="string">&#x27;t&#x27;</span>) &#123;</span><br><span class="line">                <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide: after_do_task_stat, t\n&quot;</span>);</span><br><span class="line">                m-&gt;buf[i + <span class="number">2</span>] = <span class="string">&#x27;R&#x27;</span>;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>执行 <code>cat /proc/pid/stat</code> ，发现调试器标志被改成了 <code>R</code>，说明hook成功。</p>
+<p><img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740552517384.png" alt="QQ_1740552517384.png"></p>
+<p><img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740552450667.png" alt="QQ_1740552450667.png"></p>
+<h3 id="用-kernel-patch-隐藏-frida-特征"><a href="#用-kernel-patch-隐藏-frida-特征" class="headerlink" title="用 kernel patch 隐藏 frida 特征"></a>用 kernel patch 隐藏 frida 特征</h3><ol>
+<li><p>maps 文件特征 &amp; 内存特征</p>
+<p> <code>/proc/pid/maps</code> 文件内容描述了进程的内存布局信息，frida会注入一共frida-agent模块，因此在maps里面能找到对应的内存映射信息。</p>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740651131511.png" alt="QQ_1740651131511.png"></p>
+<p> 检测代码如下：</p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> line[<span class="number">512</span>];</span><br><span class="line">FILE *fp;</span><br><span class="line">fp = <span class="built_in">fopen</span>(<span class="string">&quot;/proc/self/maps&quot;</span>, <span class="string">&quot;r&quot;</span>);</span><br><span class="line"><span class="keyword">if</span> (fp) &#123;</span><br><span class="line">	<span class="keyword">while</span> (<span class="built_in">fgets</span>(line, <span class="number">512</span>, fp)) &#123;</span><br><span class="line">		<span class="keyword">if</span>(<span class="built_in">strstr</span>(line, <span class="string">&quot;frida&quot;</span>)) &#123;</span><br><span class="line">		<span class="comment">// 检测到maps内存中有frida特征</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">fclose</span>(fp);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>线程名特征，使用如下命令检测，特征为<code>gmain, gum-js-loop, gdbus, pool-frida, linjector</code>，由 <code>proc_pid_status</code> 中的 <code>proc_task_name</code> 函数获得，但是该函数有些内核文件没有导出，可以进一步hook <code>proc_task_name</code> 里面的 <code>__get_task_comm</code>，该函数可以获取线程/进程名，导出符号</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb shell <span class="string">&#x27;for taskdir in /proc/11198/task/*; do cat &quot;$taskdir/status&quot; | grep &quot;Name:&quot;; done&#x27;</span></span><br></pre></td></tr></table></figure>
+<p> <img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740991763068.png" alt="QQ_1740991763068.png"></p>
+</li>
+</ol>
+<p><img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740992158926.png" alt="QQ_1740992158926.png"></p>
+<ol>
+<li><p>D-BUS端口特征</p>
+<p> frida 注入后在目标进程监听 27042 端口，这个端口只有 <code>adbd</code> 进程连接</p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(i = <span class="number">0</span>;i &lt;= <span class="number">65535</span>; i++) &#123;</span><br><span class="line">	sock = <span class="built_in">Socket</span>(AF INET, SOCK_STREAM, <span class="number">0</span>);</span><br><span class="line">	sa.sin_port = <span class="built_in">htons</span>(i);</span><br><span class="line">	<span class="keyword">if</span>(<span class="built_in">connect</span>(sock, (<span class="keyword">struct</span> sockaddr* )&amp;sa, <span class="keyword">sizeof</span> sa) != <span class="number">-1</span>) &#123;</span><br><span class="line">			__android_log_print(ANDROID_LOG_VERBOSE, APPNAME, <span class="string">&quot;FRIDA DETECTION [1]: 0pen Port: %d&quot;</span>, i);</span><br><span class="line">			<span class="built_in">memset</span>(res, <span class="number">0</span>, <span class="number">7</span>);</span><br><span class="line">			<span class="comment">//Frida Server 使用 D-Bus 协议进行通信。正常服务在收到 AUTH 命令后应返回 REJECT（表示需要认证）。</span></span><br><span class="line">			<span class="built_in">send</span>(sock，<span class="string">&quot;\x00&quot;</span>，<span class="number">1</span>，<span class="literal">NULL</span>);</span><br><span class="line">			<span class="built_in">send</span>(sock，<span class="string">&quot;AUTH\r\n&quot;</span>，<span class="number">6</span>,<span class="literal">NULL</span>);</span><br><span class="line">			<span class="built_in">usleep</span>(<span class="number">100</span>);</span><br><span class="line">			<span class="keyword">if</span>(ret=<span class="built_in">recv</span>(sock,res，<span class="number">6</span>，MSG_DONTWAIT)!=<span class="number">-1</span>)&#123;</span><br><span class="line">			<span class="comment">// 如果响应是 REJECT，则认为该端口运行了 Frida Server。</span></span><br><span class="line">				<span class="keyword">if</span>(<span class="built_in">strcmp</span>(res，<span class="string">&quot;REJECT&quot;</span>)==)&#123;</span><br><span class="line">					<span class="comment">/* Frida server detected.Do something. */</span></span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	<span class="built_in">close</span>(sock);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>可以用 Envcheck来检测frida特征：</p>
+<p><img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740988639218.png" alt="QQ_1740988639218.png"></p>
+<h4 id="hook-show-map-vma-函数修改-maps-文件过-maps-检测和内存特征检测"><a href="#hook-show-map-vma-函数修改-maps-文件过-maps-检测和内存特征检测" class="headerlink" title="hook show_map_vma 函数修改 maps 文件过 maps 检测和内存特征检测"></a>hook show_map_vma 函数修改 maps 文件过 maps 检测和内存特征检测</h4><p>看一下源码，该函数作用是输出maps文件中的一段内存区域（一行）</p>
+<p><code>get_vma_name</code> 获取内存name</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">show_map_vma(<span class="keyword">struct</span> seq_file *m, <span class="keyword">struct</span> vm_area_struct *vma)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">const</span> <span class="keyword">struct</span> path *path;</span><br><span class="line">	<span class="keyword">const</span> <span class="built_in">char</span> *name_fmt, *name;</span><br><span class="line">	vm_flags_t flags = vma-&gt;vm_flags;</span><br><span class="line">	unsigned <span class="built_in">long</span> ino = <span class="number">0</span>;</span><br><span class="line">	unsigned <span class="built_in">long</span> <span class="built_in">long</span> pgoff = <span class="number">0</span>;</span><br><span class="line">	unsigned <span class="built_in">long</span> start, end;</span><br><span class="line">	dev_t dev = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (vma-&gt;vm_file) &#123;</span><br><span class="line">		<span class="keyword">const</span> <span class="keyword">struct</span> inode *inode = file_user_inode(vma-&gt;vm_file);</span><br><span class="line"></span><br><span class="line">		dev = inode-&gt;i_sb-&gt;s_dev;</span><br><span class="line">		ino = inode-&gt;i_ino;</span><br><span class="line">		pgoff = ((loff_t)vma-&gt;vm_pgoff) &lt;&lt; PAGE_SHIFT;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	start = vma-&gt;vm_start;</span><br><span class="line">	end = vma-&gt;vm_end;</span><br><span class="line">	show_vma_header_prefix(m, start, end, flags, pgoff, dev, ino);</span><br><span class="line"></span><br><span class="line">	get_vma_name(vma, &amp;path, &amp;name, &amp;name_fmt);</span><br><span class="line">	<span class="keyword">if</span> (path) &#123;</span><br><span class="line">		seq_pad(m, <span class="string">&#x27; &#x27;</span>);</span><br><span class="line">		seq_path(m, path, <span class="string">&quot;\n&quot;</span>);</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (name_fmt) &#123;</span><br><span class="line">		seq_pad(m, <span class="string">&#x27; &#x27;</span>);</span><br><span class="line">		seq_printf(m, name_fmt, name);</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (name) &#123;</span><br><span class="line">		seq_pad(m, <span class="string">&#x27; &#x27;</span>);</span><br><span class="line">		seq_puts(m, name);</span><br><span class="line">	&#125;</span><br><span class="line">	seq_putc(m, <span class="string">&#x27;\n&#x27;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以在函数执行前记录下seq_file→count，执行后再根据当前内存段是否是frida相关的进行删除，只要恢复之前保存的count值就可以删除。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">bool</span> __attribute__((<span class="built_in">optimize</span>(<span class="string">&quot;O0&quot;</span>)))<span class="built_in">is_hidden_module</span>(<span class="keyword">struct</span> seq_file *m) &#123;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>  * block_str[] = &#123;</span><br><span class="line">        <span class="string">&quot;frida-agent&quot;</span>,</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="built_in">sizeof</span>(block_str) / <span class="built_in">sizeof</span>(block_str[<span class="number">0</span>]); i++) &#123;</span><br><span class="line">       <span class="keyword">if</span> (<span class="built_in">strstr</span>(m-&gt;buf, block_str[i])) &#123; <span class="comment">// 查看buf中是否有frida-agent符号</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">       &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">before_show_map_vma</span><span class="params">(<span class="type">hook_fargs2_t</span> *fargs, <span class="type">void</span> *udata)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">seq_file</span> *m = (<span class="keyword">struct</span> seq_file *)fargs-&gt;arg0;</span><br><span class="line">    fargs-&gt;local.data0 = <span class="number">0</span>; <span class="comment">// 临时变量，存储 count 值</span></span><br><span class="line">    <span class="keyword">if</span> (m &amp;&amp; m-&gt;buf) &#123;</span><br><span class="line">        fargs-&gt;local.data0 = m-&gt;count;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">after_show_map_vma</span><span class="params">(<span class="type">hook_fargs2_t</span> *fargs, <span class="type">void</span> *udata)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">seq_file</span> *m = (<span class="keyword">struct</span> seq_file *)fargs-&gt;arg0;</span><br><span class="line">    <span class="keyword">if</span> (m &amp;&amp; m-&gt;buf) &#123;</span><br><span class="line">        <span class="keyword">if</span> (fargs-&gt;local.data0 &amp;&amp; <span class="built_in">is_hidden_module</span>(m)) &#123; <span class="comment">// 检查frida-agent内存特征</span></span><br><span class="line">            <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide: after_show_map_vma, name: %s\n&quot;</span>, (<span class="type">char</span> *)m-&gt;buf);</span><br><span class="line">            m-&gt;count = fargs-&gt;local.data0; <span class="comment">// 如果检查到就把这一行删掉</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以用 <code>Envcheck</code> app来对 hook 效果进行检测，挂上 frida 后，Maps记录检查被绕过</p>
+<p><img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740988484105.png" alt="QQ_1740988484105.png"></p>
+<h4 id="hook-get-task-comm-函数过线程检测"><a href="#hook-get-task-comm-函数过线程检测" class="headerlink" title="hook __get_task_comm 函数过线程检测"></a>hook __get_task_comm 函数过线程检测</h4><p><code>_get_task_comm</code> 函数定义如下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"> char *__get_task_comm(char *buf, size_t buf_size, struct task_struct *tsk)</span><br><span class="line"> &#123;</span><br><span class="line"> 	task_lock(tsk);</span><br><span class="line">-	strncpy(buf, tsk-&gt;<span class="built_in">comm</span>, buf_size);</span><br><span class="line">+	/* Always NUL terminated and zero-padded */</span><br><span class="line">+	strscpy_pad(buf, tsk-&gt;<span class="built_in">comm</span>, buf_size);</span><br><span class="line"> 	task_unlock(tsk);</span><br><span class="line"> 	<span class="built_in">return</span> buf;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>buf中的就是name，可以after_hook把buf值替换成一些自定义字符。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">bool</span> __attribute__((<span class="built_in">optimize</span>(<span class="string">&quot;O0&quot;</span>)))<span class="built_in">is_hidden_comm</span>(<span class="type">char</span> * buf) &#123;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> * ban_names[] = &#123;</span><br><span class="line">        <span class="string">&quot;gum-js-loop&quot;</span>,</span><br><span class="line">        <span class="string">&quot;pool-frida&quot;</span>,</span><br><span class="line">        <span class="string">&quot;linjector&quot;</span>,</span><br><span class="line">        <span class="string">&quot;gmain&quot;</span>,</span><br><span class="line">        <span class="string">&quot;gdbus&quot;</span>,</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="built_in">sizeof</span>(ban_names) / <span class="built_in">sizeof</span>(ban_names[<span class="number">0</span>]); i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">strstr</span>(buf, ban_names[i])) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 注意这，一定要加上__attribute__((optimize(&quot;O0&quot;)))，否则下面那部分会被优化成memset导致加载失败</span></span><br><span class="line"><span class="type">void</span>  __attribute__((<span class="built_in">optimize</span>(<span class="string">&quot;O0&quot;</span>)))<span class="built_in">after_get_task_comm</span>(<span class="type">hook_fargs3_t</span> *fargs, <span class="type">void</span> *udata) &#123;</span><br><span class="line">    <span class="type">char</span> *buf = (<span class="type">char</span> *)fargs-&gt;arg0;</span><br><span class="line">    <span class="type">size_t</span> buf_size = (<span class="type">size_t</span>)fargs-&gt;arg1;</span><br><span class="line">    <span class="keyword">if</span> (buf &amp;&amp; buf_size &amp;&amp; <span class="built_in">is_hidden_comm</span>(buf)) &#123;</span><br><span class="line">        <span class="built_in">pr_info</span>(<span class="string">&quot;eps1l0h-hide: after_get_task_comm, name: %s\n&quot;</span>, buf);</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; buf_size; i++) &#123;</span><br><span class="line">            buf[i] = <span class="string">&#x27; &#x27;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>再次检测一下，发现线程检测已经被过掉了</p>
+<p><img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740994157769.png" alt="QQ_1740994157769.png"></p>
+<p><img src="/2025/03/22/Android%20Kernel%20Patch/QQ_1740994253805.png" alt="QQ_1740994253805.png"></p>
+<h4 id="hook-connect-过端口检测"><a href="#hook-connect-过端口检测" class="headerlink" title="hook connect 过端口检测"></a>hook connect 过端口检测</h4><p>既然知道是27042端口，直接对<code>connect</code> 系统调用进行 hook，当port是27042时，直接跳过该函数即可，其函数原型如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">connect</span><span class="params">(<span class="type">int</span> sockfd, <span class="type">const</span> <span class="keyword">struct</span> sockaddr *addr, <span class="type">socklen_t</span> addrlen)</span></span>; </span><br></pre></td></tr></table></figure>
+<p>可以对connect系统调用进行hook，如果检测到端口为27042，就直接跳过函数执行。</p>
+<p><img src="/2025/03/22/Android%20Kernel%20Patch/image%201.png" alt="image.png"></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://example.com">EPs1l0h</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://example.com/2025/03/22/Android%20Kernel%20Patch/">https://example.com/2025/03/22/Android%20Kernel%20Patch/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://example.com" target="_blank">EPs1l0h's Castle</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"></div><div class="post_share"><div class="social-share" data-image="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechat.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/2025/03/22/Linux%20kernel%20%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/"><img class="next-cover" src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="onerror=null;src='/img/404.gif'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Linux kernel 启动流程</div></div></a></div></nav><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">EPs1l0h</div><div class="author-info__description"></div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">63</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/EPs1l0h"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">Spears shall be shaken! Shields shall be splintered! A sword day! A red day! Ere the sun rises!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Android-Kernel-Patch"><span class="toc-number">1.</span> <span class="toc-text">Android Kernel Patch</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Android-Linux-Kernel-%E5%AE%9A%E5%88%B6"><span class="toc-number">1.1.</span> <span class="toc-text">Android Linux Kernel 定制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E4%BA%8E-eBPF-%E5%BC%80%E5%8F%91%E7%9A%84%E5%BC%80%E6%BA%90%E5%B7%A5%E5%85%B7"><span class="toc-number">1.1.1.</span> <span class="toc-text">基于 eBPF 开发的开源工具</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Android-Linux-Kernel-%E5%AE%9A%E5%88%B6%E5%B7%A5%E4%BD%9C%E6%B5%81"><span class="toc-number">1.1.2.</span> <span class="toc-text">Android Linux Kernel 定制工作流</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#APatch"><span class="toc-number">1.1.3.</span> <span class="toc-text">APatch</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-Kernel-Patch"><span class="toc-number">1.2.</span> <span class="toc-text">安装 Kernel Patch</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Linux-Kernel-%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86"><span class="toc-number">1.2.1.</span> <span class="toc-text">Linux Kernel 基础知识</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E9%95%9C%E5%83%8F%E9%80%86%E5%90%91"><span class="toc-number">1.2.2.</span> <span class="toc-text">内核镜像逆向</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#APatch%E4%BF%AE%E8%A1%A5"><span class="toc-number">1.2.2.1.</span> <span class="toc-text">APatch修补</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kernel-Patch-%E5%BC%80%E5%8F%91"><span class="toc-number">1.3.</span> <span class="toc-text">Kernel Patch 开发</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83"><span class="toc-number">1.3.1.</span> <span class="toc-text">开发环境</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%A5%E5%8F%A3%E5%87%BD%E6%95%B0%E8%A7%A3%E6%9E%90"><span class="toc-number">1.3.2.</span> <span class="toc-text">入口函数解析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%A8-Kernel-Patch-hook-%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8"><span class="toc-number">1.3.3.</span> <span class="toc-text">用 Kernel Patch hook 系统调用</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#kpm-%E5%AE%89%E8%A3%85syscall-hook"><span class="toc-number">1.3.3.1.</span> <span class="toc-text">kpm 安装syscall hook</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#hook-openat"><span class="toc-number">1.3.3.2.</span> <span class="toc-text">hook openat</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%A8-Kernel-Patch-%E9%9A%90%E8%97%8F%E8%B0%83%E8%AF%95%E5%99%A8%E7%89%B9%E5%BE%81"><span class="toc-number">1.3.4.</span> <span class="toc-text">用 Kernel Patch 隐藏调试器特征</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E7%9A%84-debugger-check-%E6%96%B9%E6%B3%95"><span class="toc-number">1.3.4.1.</span> <span class="toc-text">常见的 debugger check 方法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#hook-seq-put-decimal-ull-%E5%87%BD%E6%95%B0%E8%BF%87-TracerPid-%E6%A3%80%E6%B5%8B"><span class="toc-number">1.3.4.2.</span> <span class="toc-text">hook seq_put_decimal_ull 函数过 TracerPid 检测</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#hook-seq-puts-%E5%87%BD%E6%95%B0%E8%BF%87-State-%E6%A3%80%E6%B5%8B"><span class="toc-number">1.3.4.3.</span> <span class="toc-text">hook seq_puts 函数过 State 检测</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#hook-proc-pid-wchan-%E5%87%BD%E6%95%B0%E8%BF%87-wchan-%E6%A3%80%E6%B5%8B"><span class="toc-number">1.3.4.4.</span> <span class="toc-text">hook proc_pid_wchan 函数过 wchan 检测</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#hook-do-task-stat-%E5%87%BD%E6%95%B0%E8%BF%87-stat-%E6%A3%80%E6%B5%8B"><span class="toc-number">1.3.4.5.</span> <span class="toc-text">hook do_task_stat 函数过 stat 检测</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%A8-kernel-patch-%E9%9A%90%E8%97%8F-frida-%E7%89%B9%E5%BE%81"><span class="toc-number">1.3.5.</span> <span class="toc-text">用 kernel patch 隐藏 frida 特征</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#hook-show-map-vma-%E5%87%BD%E6%95%B0%E4%BF%AE%E6%94%B9-maps-%E6%96%87%E4%BB%B6%E8%BF%87-maps-%E6%A3%80%E6%B5%8B%E5%92%8C%E5%86%85%E5%AD%98%E7%89%B9%E5%BE%81%E6%A3%80%E6%B5%8B"><span class="toc-number">1.3.5.1.</span> <span class="toc-text">hook show_map_vma 函数修改 maps 文件过 maps 检测和内存特征检测</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#hook-get-task-comm-%E5%87%BD%E6%95%B0%E8%BF%87%E7%BA%BF%E7%A8%8B%E6%A3%80%E6%B5%8B"><span class="toc-number">1.3.5.2.</span> <span class="toc-text">hook __get_task_comm 函数过线程检测</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#hook-connect-%E8%BF%87%E7%AB%AF%E5%8F%A3%E6%A3%80%E6%B5%8B"><span class="toc-number">1.3.5.3.</span> <span class="toc-text">hook connect 过端口检测</span></a></li></ol></li></ol></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/03/22/Android%20Kernel%20Patch/" title="Android Kernel Patch"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="Android Kernel Patch"/></a><div class="content"><a class="title" href="/2025/03/22/Android%20Kernel%20Patch/" title="Android Kernel Patch">Android Kernel Patch</a><time datetime="2025-03-22T10:04:21.000Z" title="发表于 2025-03-22 18:04:21">2025-03-22</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/03/22/Linux%20kernel%20%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/" title="Linux kernel 启动流程"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="Linux kernel 启动流程"/></a><div class="content"><a class="title" href="/2025/03/22/Linux%20kernel%20%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/" title="Linux kernel 启动流程">Linux kernel 启动流程</a><time datetime="2025-03-22T05:25:14.000Z" title="发表于 2025-03-22 13:25:14">2025-03-22</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/03/22/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/" title="计算机启动流程"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="计算机启动流程"/></a><div class="content"><a class="title" href="/2025/03/22/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/" title="计算机启动流程">计算机启动流程</a><time datetime="2025-03-22T05:25:14.000Z" title="发表于 2025-03-22 13:25:14">2025-03-22</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/03/21/%E8%93%9D%E5%B8%BD%E6%9D%AF2022%E5%8D%8A%E5%86%B3%E8%B5%9BWP%E2%80%94%E2%80%94%E8%A6%81%E8%93%9D%E5%B8%BD%E4%B8%8D%E8%A6%81%E7%BB%BF%E5%B8%BD/" title="蓝帽杯(取证杯）2022半决赛WP"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover2.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="蓝帽杯(取证杯）2022半决赛WP"/></a><div class="content"><a class="title" href="/2025/03/21/%E8%93%9D%E5%B8%BD%E6%9D%AF2022%E5%8D%8A%E5%86%B3%E8%B5%9BWP%E2%80%94%E2%80%94%E8%A6%81%E8%93%9D%E5%B8%BD%E4%B8%8D%E8%A6%81%E7%BB%BF%E5%B8%BD/" title="蓝帽杯(取证杯）2022半决赛WP">蓝帽杯(取证杯）2022半决赛WP</a><time datetime="2025-03-21T10:42:55.748Z" title="发表于 2025-03-21 18:42:55">2025-03-21</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/03/21/%E8%93%9D%E5%B8%BD%E6%9D%AF2022%E5%88%9D%E8%B5%9B%E5%A4%8D%E7%8E%B0/" title="蓝帽杯(电子取证杯)2022赛题复现"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover3.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="蓝帽杯(电子取证杯)2022赛题复现"/></a><div class="content"><a class="title" href="/2025/03/21/%E8%93%9D%E5%B8%BD%E6%9D%AF2022%E5%88%9D%E8%B5%9B%E5%A4%8D%E7%8E%B0/" title="蓝帽杯(电子取证杯)2022赛题复现">蓝帽杯(电子取证杯)2022赛题复现</a><time datetime="2025-03-21T10:42:55.747Z" title="发表于 2025-03-21 18:42:55">2025-03-21</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true')"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2025 By EPs1l0h</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.min.js"></script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    tex: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]],
+      tags: 'ams'
+    },
+    chtml: {
+      scale: 1.2
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, ''],
+        insertScript: [200, () => {
+          document.querySelectorAll('mjx-container:not\([display]\)').forEach(node => {
+            const target = node.parentNode
+            if (target.nodeName.toLowerCase() === 'li') {
+              target.parentNode.classList.add('has-jax')
+            } else {
+              target.classList.add('has-jax')
+            }
+          });
+        }, '', false]
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typeset()
+}</script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://example.com/2025/03/22/Android%20Kernel%20Patch/'
+    this.page.identifier = '/2025/03/22/Android%20Kernel%20Patch/'
+    this.page.title = 'Android Kernel Patch'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+
+  document.getElementById('darkmode').addEventListener('click', () => {
+    setTimeout(() => window.disqusReset(), 200)
+  })
+}
+
+if ('Disqus' === 'Disqus' || !false) {
+  if (false) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script></div><div class="aplayer no-destroy" data-id="2981528901" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="true"> </div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  typeof preloader === 'object' && preloader.initLoading()
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

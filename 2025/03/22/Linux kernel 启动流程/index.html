@@ -1,0 +1,522 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Linux kernel 启动流程 | EPs1l0h's Castle</title><meta name="author" content="EPs1l0h"><meta name="copyright" content="EPs1l0h"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Linux kernel 启动流程前置知识MBR 分区和GPT 分区MBR （Master Boot Record）分区MBR指的是指定开机指定启动硬盘的第一个扇区，通常为512字节，为什么说分区方法也叫MBR呢，因为这个扇区包括了两部分内容: bootstrap code area和partition table  bootstrap code area占据446个字节，包含了启动相关的代码 p">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux kernel 启动流程">
+<meta property="og:url" content="https://example.com/2025/03/22/Linux%20kernel%20%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/index.html">
+<meta property="og:site_name" content="EPs1l0h&#39;s Castle">
+<meta property="og:description" content="Linux kernel 启动流程前置知识MBR 分区和GPT 分区MBR （Master Boot Record）分区MBR指的是指定开机指定启动硬盘的第一个扇区，通常为512字节，为什么说分区方法也叫MBR呢，因为这个扇区包括了两部分内容: bootstrap code area和partition table  bootstrap code area占据446个字节，包含了启动相关的代码 p">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true">
+<meta property="article:published_time" content="2025-03-22T05:25:14.000Z">
+<meta property="article:modified_time" content="2025-03-21T10:32:22.000Z">
+<meta property="article:author" content="EPs1l0h">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://example.com/2025/03/22/Linux%20kernel%20%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Linux kernel 启动流程',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-03-21 18:32:22'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="source/css/aplayer_custom.css"><meta name="generator" content="Hexo 6.2.0"></head><body><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">63</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> home</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/writeup"><i class="fa-fw fas fa-folder-open"></i><span> writeup</span></a></li><li><a class="site-page child" href="/categories/notes"><i class="fa-fw fas fa-folder-open"></i><span> notes</span></a></li><li><a class="site-page child" href="/categories/jottings"><i class="fa-fw fas fa-folder-open"></i><span> jottings</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-link"></i><span> Link</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Here-is-SG"><i class="fa-fw fas fa-link"></i><span> iPlayForSG</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://jameshoi.github.io/"><i class="fa-fw fas fa-link"></i><span> jameshoi</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Only-xiaoxiao"><i class="fa-fw fas fa-link"></i><span> xiaoxiao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Clovershrub"><i class="fa-fw fas fa-link"></i><span> Clovershrub</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://blog.gaoyucan.site/"><i class="fa-fw fas fa-link"></i><span> gaoyucan</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://demoyao100.github.io/"><i class="fa-fw fas fa-link"></i><span> moyao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://lantern.cool/"><i class="fa-fw fas fa-link"></i><span> lantern</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://mapleqian.github.io/"><i class="fa-fw fas fa-link"></i><span> Serendy</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> about</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">EPs1l0h's Castle</a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> home</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-folder-open"></i><span> Categories</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/categories/writeup"><i class="fa-fw fas fa-folder-open"></i><span> writeup</span></a></li><li><a class="site-page child" href="/categories/notes"><i class="fa-fw fas fa-folder-open"></i><span> notes</span></a></li><li><a class="site-page child" href="/categories/jottings"><i class="fa-fw fas fa-folder-open"></i><span> jottings</span></a></li></ul></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-link"></i><span> Link</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Here-is-SG"><i class="fa-fw fas fa-link"></i><span> iPlayForSG</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://jameshoi.github.io/"><i class="fa-fw fas fa-link"></i><span> jameshoi</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Only-xiaoxiao"><i class="fa-fw fas fa-link"></i><span> xiaoxiao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://www.cnblogs.com/Clovershrub"><i class="fa-fw fas fa-link"></i><span> Clovershrub</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://blog.gaoyucan.site/"><i class="fa-fw fas fa-link"></i><span> gaoyucan</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://demoyao100.github.io/"><i class="fa-fw fas fa-link"></i><span> moyao</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://lantern.cool/"><i class="fa-fw fas fa-link"></i><span> lantern</span></a></li><li><a class="site-page child" target="_blank" rel="noopener" href="https://mapleqian.github.io/"><i class="fa-fw fas fa-link"></i><span> Serendy</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> about</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Linux kernel 启动流程</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-03-22T05:25:14.000Z" title="发表于 2025-03-22 13:25:14">2025-03-22</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-03-21T10:32:22.000Z" title="更新于 2025-03-21 18:32:22">2025-03-21</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/notes/">notes</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Linux kernel 启动流程"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="Linux-kernel-启动流程"><a href="#Linux-kernel-启动流程" class="headerlink" title="Linux kernel 启动流程"></a>Linux kernel 启动流程</h1><h2 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h2><h3 id="MBR-分区和GPT-分区"><a href="#MBR-分区和GPT-分区" class="headerlink" title="MBR 分区和GPT 分区"></a>MBR 分区和GPT 分区</h3><h4 id="MBR-（Master-Boot-Record）分区"><a href="#MBR-（Master-Boot-Record）分区" class="headerlink" title="MBR （Master Boot Record）分区"></a>MBR （Master Boot Record）分区</h4><p>MBR指的是指定开机指定启动硬盘的第一个扇区，通常为<code>512</code>字节，为什么说分区方法也叫MBR呢，因为这个扇区包括了两部分内容: <code>bootstrap code area</code>和<code>partition table</code></p>
+<ol>
+<li>bootstrap code area占据446个字节，包含了启动相关的代码</li>
+<li>partition table分区表占据了64个字节，包含了四个分区表的内容，每个分区表占据16个字节，MBR每个分区表占据16个字节，比如: <code>80 01 01 00 0B FE BF FC 3F 00 00 00 7E 86 BB 00</code></li>
+</ol>
+<pre><code>| 字节内容 | 长度 | 含义 |
+| --- | --- | --- |
+| **`80`** | 1 字节 | 分区状态：`00`  非活动分区，`80`  活动分区 |
+| **`01 01 00`** | 3 字节 | 表示分区起始的 `C/H/S`（但不指C=1, H=1, S=0） |
+| **`0B`** | 1 字节 | 文件系统标志位：&quot;`0B`&quot;表示分区的系统类型是`FAT32`，其他常用的有`04(FAT16), 07(NTFS)` |
+| **`FE BF FC`** | 3 字节 | 共同表示分区结束的 `C/H/S` |
+| **`3F 00 00 00`** | 4 字节 | 分区起始相对扇区号 |
+| **`7E 86 BB 00`** | 4 字节 | 分区总的扇区数 |
+</code></pre><ol>
+<li><code>446+64 = 510</code>,还剩下最后两个字节的内容为<code>0x55aa</code>,这是MBR的标志所以MBR这个名词不仅仅指磁盘的第一个扇区，它还暗指了上面的这种布局以及分区格式</li>
+</ol>
+<ul>
+<li>由于MBR格式的分区表只能识别四个分区(这些分区叫主分区)，如果想分四个以上的分区，必须创建一个分区，该分区用于存放更多的分区表，这样的分区叫做扩展分区，扩展分区只能有一个: 分区方式为4个主分区或者3个主分区加上一个扩展分区。</li>
+<li>由于MBR使用4个字节表示分区总的扇区数,因此它可以表示的最大分区大小为<code>2199023255552</code>字节，约为<code>2T</code>，这也是MBR的一个限制。</li>
+</ul>
+<h4 id="GPT（GUID-Partition-Table）分区"><a href="#GPT（GUID-Partition-Table）分区" class="headerlink" title="GPT（GUID Partition Table）分区"></a>GPT（GUID Partition Table）分区</h4><p>GPT采用LBA的地址格式，为了向后兼容以及用来防止不支持GPT的硬盘管理工具错误识别并破坏硬盘中的数据，<code>LBA0</code>仍然给<code>MB</code>R使用,不过MBR里边只有<code>一块分区</code>，分区类型为<code>0xEE</code>,这种MBR又叫<code>&quot;Protective MBR&quot;</code>。</p>
+<p>GPT的格式维基百科中有详细描述，它还有一块区域用来备份分区表，在磁盘的末尾部分:</p>
+<p><img src="/2025/03/22/Linux%20kernel%20%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/QQ_1733657396028.png" alt="QQ_1733657396028.png"></p>
+<p>按照GPT的格式，磁盘真正的分区数据部分从<code>LBA34</code>开始，但分区软件一般将GPT分区边界对齐，比如对齐到<code>2048扇区</code>处:<code>1048576 Byte</code>，所以一般分区的数据从<code>LBA2048</code>开始，因此从<code>LBA34</code>到<code>LBA2048</code>有一块大约<code>1MB</code>的间隙。</p>
+<p>Pixel 6 Pro 手机的 sd 设备如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">raven:/sys/block $ <span class="built_in">ls</span> -l sd*</span><br><span class="line">lrwxrwxrwx 1 root root 0 2023-09-01 22:30 sda -&gt; ../devices/platform/14700000.ufs/host0/target0:0:0/0:0:0:0/block/sda</span><br><span class="line">lrwxrwxrwx 1 root root 0 2023-09-01 22:30 sdb -&gt; ../devices/platform/14700000.ufs/host0/target0:0:0/0:0:0:1/block/sdb</span><br><span class="line">lrwxrwxrwx 1 root root 0 2023-09-01 22:30 sdc -&gt; ../devices/platform/14700000.ufs/host0/target0:0:0/0:0:0:2/block/sdc</span><br><span class="line">lrwxrwxrwx 1 root root 0 2023-09-01 22:30 sdd -&gt; ../devices/platform/14700000.ufs/host0/target0:0:0/0:0:0:3/block/sdd</span><br></pre></td></tr></table></figure>
+<p>可以看到有多个sd设备，但是这并不是代表有六个物理设备，而是把一个ufs物理设备分成四块，称之为LU（Logical Unit），它们的逻辑地址空间是独立的，都是从LBA 0开始，因此都有各自的分区表结构。</p>
+<p>比如sda的分区表，其LBA大小为<code>4096</code>字节，按照上面的GPT分区格式：</p>
+<ol>
+<li>LBA0是<code>Protect MBR</code></li>
+<li>LBA1是分区表头，<code>Primary GPT Header</code></li>
+<li>LBA2-LBA33是分区表，系统相关的分区例如<code>system_a</code>、<code>system_b</code>、<code>boot</code>、<code>vendor</code>、<code>data</code>等，都是安卓操作系统用来存储不同功能和数据的分区。<code>system_a</code>和<code>system_b</code>是为了支持A/B分区更新机制，常见于安卓8及以后的版本，其中<code>system_a</code>和<code>system_b</code>分别代表两个独立的系统分区，可以在不同版本的系统之间进行切换。<code>bootloader</code>会根据分区表来知道需要刷写的具体分区。</li>
+</ol>
+<ul>
+<li><strong>A/B 分区</strong>是为了支持无缝更新（Seamless Updates）机制的设计，常见于 Android 8 及以上版本。系统分为两个独立的区域，分别是<code>system_a</code>和<code>system_b</code>，它们是两个独立的系统分区。<code>system_a</code>存放当前活跃的系统（通常是正在运行的版本），<code>system_b</code>存放备用系统（通常是更新后的版本）。当更新时，系统会将新版本的系统安装到<code>system_b</code>，并在下次启动时切换到该分区。这允许设备在升级时避免系统挂起，并提供一个可靠的回滚机制。</li>
+<li><strong>Bootloader</strong>负责管理设备的引导过程，包括刷写系统分区、恢复操作等。当执行类似<code>fastboot flash system_a system.img</code>这样的命令时，Bootloader会解析设备的分区表（通常是GPT），确定系统镜像要写入哪个分区（比如<code>system_a</code>）。</li>
+<li><strong>Linux</strong>内核在启动时会扫描所有的块设备（block devices），并生成相应的<strong>gendisk</strong>数据结构，用于描述设备上的分区。以高通UFS设备为例，内核会通过一系列函数（如<code>sd_probe</code>）扫描和识别设备上的每个逻辑单元（LU）。</li>
+<li>内核将设备和分区信息通过 <strong>sysfs</strong> 公开，<code>/sys/block/sda</code> 这样的路径表示块设备的元数据。分区信息会在每个设备的子目录中创建，如 <code>/sys/block/sda/sda1</code>, <code>/sys/block/sda/sda2</code> 等，表示<code>/dev/sda</code>上不同的分区。这些目录通过<strong>kobject</strong>机制（一个内核对象系统）来管理，允许内核和用户空间通过<code>sysfs</code>接口访问块设备和分区。</li>
+<li>内核会触发 <code>uevent</code>事件，<code>init</code> 进程会响应这些事件，在 <code>/dev</code> 目录下创建对应的块设备文件。例如，<code>/dev/block/sda</code>表示整个<code>sda</code>设备，<code>/dev/block/sda1</code>、<code>/dev/block/sda2</code>等表示各个分区。</li>
+<li>通过<code>sysfs</code>，内核暴露分区信息，用户空间通过<code>/dev</code>进行访问，同时设备名称和分区名称的映射通过符号链接体现。</li>
+</ul>
+<h4 id="ramdisk-initrd-ramfs-tmpfs-initramfs-rootfs-根文件系统"><a href="#ramdisk-initrd-ramfs-tmpfs-initramfs-rootfs-根文件系统" class="headerlink" title="ramdisk, initrd, ramfs, tmpfs, initramfs, rootfs, 根文件系统"></a><strong>ramdisk, initrd, ramfs, tmpfs, initramfs, rootfs, 根文件系统</strong></h4><ul>
+<li><code>ramdisk</code>:<code>ramdisk</code>简单来说就是<code>RAM</code>模拟为硬盘的技术。当<code>ramdisk</code>功能开启以后会有如下的设备文件:<code>/dev/ram0,/dev/ram1,/dev/ram2 ... /dev/ram15</code>,由于每一块模拟的都是硬盘，因此可以直接格式化为指定文件系统并挂载。</li>
+<li>根文件系统<strong>:</strong>这里指的linux系统启动以后最终/目录所在的那个文件系统。</li>
+<li><code>ramfs, tmpfs, rootfs</code>:都是文件系统，因为<code>ramdisk</code>有着一些缺点，Linus Torvalds创建出了<code>ramfs</code>文件系统，它将<code>linux的缓存机制</code>(page cache和dentry cache)用做动态的可扩展的基于ram的文件系统。在ramfs的基础上其他内核开发者又创建了一个改善版本叫做<code>tmpfs</code>,<code>tmpfs</code>可以将数据写入交换分区，并且可以限制挂载点的大小。<code>rootfs</code>虽然它直译过来是”根文件系统”的意思，但这里指的是<code>内核</code>中的一个文件系统，它和<code>用户空间</code>的”根文件系统”并不是一个东西</li>
+<li><code>initramfs</code>:是<code>ramfs</code>的一个<code>实例</code>。</li>
+<li><code>initrd</code>:我理解就是在 <code>init</code> 之前找一个临时的根文件系统进行挂载，挂载的就是 <code>initrd</code>，比如<code>ramdisk</code>，<code>initramfs</code></li>
+</ul>
+<h2 id="Linux-Kernel-启动流程"><a href="#Linux-Kernel-启动流程" class="headerlink" title="Linux Kernel 启动流程"></a>Linux Kernel 启动流程</h2><h3 id="Linux-Kernel-启动的五种方式"><a href="#Linux-Kernel-启动的五种方式" class="headerlink" title="Linux Kernel 启动的五种方式"></a>Linux Kernel 启动的五种方式</h3><h4 id="启动方式-1"><a href="#启动方式-1" class="headerlink" title="启动方式 1"></a>启动方式 1</h4><ol>
+<li>编译一个 <code>init</code>文件</li>
+<li>创建一个镜像文件 <code>disk.img</code>，格式化为 <code>ext4</code>文件系统，向里面写入<code>init</code>可执行文件（方法是挂载这个文件系统到一个目录上，把<code>init</code>文件丢进去，再卸载即可）</li>
+<li>用 <code>qemu</code>启动该镜像，用 <code>-hda</code>指定硬盘镜像，<code>--append</code>传递命令行参数给内核(其中 <code>root=/dev/sda</code>参数指定了根文件系统所在的块设备）</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">qemu-system-x86_64 -kernel  <span class="built_in">arch</span>/x86_64/boot/bzImage -hda my_rootfs/root_disk/disk.img -initrd my_rootfs/old_ramdisk/ramdisk.img --append <span class="string">&quot;root=/dev/sda init=/init console=ttyS0&quot;</span> -nographi</span><br></pre></td></tr></table></figure>
+<p>但是随着时代的发展，硬件变的越来越复杂，根文件系统可能处于各种scsi,sata,flash设备上，甚至RAID阵列,可插拔的usb设备中。根文件系统还可能被压缩和加密，那么如何解压缩，如何解密则成了问题。如果根文件系统处于网络文件系统NFS中，那么内核就必须执行DHCP,DNS网络请求然后登录到目标机器中然后才能挂载根文件系统。</p>
+<p>那么总体解决方案是不论最终的根文件系统在哪，内核先挂载一个<code>初始根文件系统</code>，这个初始根文件系统负责<code>加载合适的驱动</code>并<code>寻找最终根文件系统并挂载</code>。而挂载初始化根文件系统可以基于<code>ramdisk, ramfs, tmpfs, rootfs</code>这些技术。</p>
+<h4 id="启动方式-2"><a href="#启动方式-2" class="headerlink" title="启动方式 2"></a>启动方式 2</h4><ol>
+<li><p>开启<code>CONFIG_BLK_DEV_RAM</code>配置</p>
+ <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">CONFIG_BLK_DEV_RAM=y</span><br><span class="line">CONFIG_BLK_DEV_RAM_COUNT=16</span><br><span class="line">CONFIG_BLK_DEV_RAM_SIZE=4096</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>用之前提到的<code>ramdisk</code>技术，将其作为一个<code>初始根文件系统</code>挂载，创建一个镜像文件 <code>ramdisk.img</code>，格式化成 <code>ext2</code> 文件系统后挂载，编译一个可执行文件<code>linuxrc</code>写入<code>ramdisk.img</code> ，卸载该文件系统，ramdisk就创建好了</p>
+</li>
+<li>用指定 <code>-initrd ramdisk.img, -hda disk.img</code> 启动OS，会先执行 <code>linuxrc</code>，再执行 <code>init</code> </li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">qemu-system-x86_64 -kernel <span class="built_in">arch</span>/x86_64/boot/bzImage -hda my_rootfs/root_disk/disk.img --append <span class="string">&quot;root=/dev/sda init=/init console=ttyS0&quot;</span> -nographic</span><br></pre></td></tr></table></figure>
+<p>第一种启动方式中内核执行完<code>/init</code>进程以后就不回头了，<code>init</code>进程如果退出内核会<code>panic</code>。</p>
+<p>而第二种启动方式内核会利用<code>ramdisk</code>在上挂载<code>ramdisk.img</code>并执行<code>linuxrc</code>程序(写死的),并且等待这个程序的返回，然后内核再去挂载并执行位于<code>/dev/sda</code>中的<code>init</code>程序。<code>linuxrc</code>执行的任务一般是加载下一阶段init程序所需要的模块。</p>
+<h4 id="启动方式-3"><a href="#启动方式-3" class="headerlink" title="启动方式 3"></a>启动方式 3</h4><ol>
+<li>编译一个 <code>init</code>文件</li>
+<li>创建一个镜像文件 <code>disk.img</code>，格式化为 <code>ext2</code>文件系统，向里面写入<code>init</code>可执行文件（方法是挂载这个文件系统到一个目录上，把<code>init</code>文件丢进去，再卸载即可）</li>
+<li>不指定 <code>-hda</code> 参数，而是指定<code>-initrd disk.img</code>，<code>—-append</code>指定<code>root=/dev/ram0</code> </li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">qemu-system-x86_64 -kernel  <span class="built_in">arch</span>/x86_64/boot/bzImage -initrd my_rootfs/initrd/disk.img  --append <span class="string">&quot;root=/dev/ram0 init=/init console=ttyS0&quot;</span> -nographic</span><br></pre></td></tr></table></figure>
+<p>这种方式只加载 <code>disk.img</code> 作为临时根文件系统，<code>root=/dev/ram0</code>指定使用<code>ramdisk</code>作为根文件系统，直接在<code>ramdisk</code>中执行<code>init</code>程序，不需要再切换到其他根文件系统。</p>
+<h4 id="启动方式-4"><a href="#启动方式-4" class="headerlink" title="启动方式 4"></a>启动方式 4</h4><ol>
+<li>编译 <code>init</code> 可执行文件</li>
+<li>将该文件打包成 <code>cpio</code> 格式并用 <code>gzip</code> 压缩，得到<code>simple_initrd.cpio.gz</code> ，一个 <code>initramfs</code></li>
+<li>用<code>-initrd simple_initrd.cpio.gz</code> 启动 <code>initramfs</code>，从而启动OS</li>
+</ol>
+<p>上述过程<code>无需 root 权限</code> ，安卓<code>boot.img</code>中的<code>ramdisk</code>启动算是此类启动方式。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">qemu-system-x86_64 -kernel  <span class="built_in">arch</span>/x86_64/boot/bzImage -initrd my_rootfs/initrd_cpio/simple_initrd.cpio.gz  --append <span class="string">&quot;init=/init console=ttyS0&quot;</span> -nographic</span><br></pre></td></tr></table></figure>
+<h4 id="启动方式-5"><a href="#启动方式-5" class="headerlink" title="启动方式 5"></a>启动方式 5</h4><ol>
+<li>编译 init 可执行文件</li>
+<li>将该文件打包成 <code>cpio</code> 格式并用 <code>gzip</code> 压缩，得到<code>simple_initrd.cpio.gz</code> ，一个 <code>initramfs</code></li>
+<li>修改内核配置 <code>CONFIG_INITRAMFS_SOURCE=&quot;my_rootfs/initramfs/initramfs_data.cpio.gz&quot;</code> </li>
+<li>重新编译 <code>bzImage</code></li>
+<li>直接启动OS内核，无需添加<code>-initrd</code>参数</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">qemu-system-x86_64 -kernel  <span class="built_in">arch</span>/x86_64/boot/bzImage --append <span class="string">&quot;init=/init console=ttyS0&quot;</span> -nographic</span><br></pre></td></tr></table></figure>
+<h3 id="linux-kernel-启动具体流程"><a href="#linux-kernel-启动具体流程" class="headerlink" title="linux_kernel 启动具体流程"></a>linux_kernel 启动具体流程</h3><p><img src="/2025/03/22/Linux%20kernel%20%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/QQ_1733655701541.png" alt="QQ_1733655701541.png"></p>
+<ul>
+<li><p><code>Boot Loader</code>加载与解压缩内核镜像</p>
+<p>  <img src="/2025/03/22/Linux%20kernel%20%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/QQ_1733811643751.png" alt="QQ_1733811643751.png"></p>
+<ul>
+<li>内核加载<ol>
+<li>书接上文：<a href="%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%20159020833d4f80a698d5c18916dd515f.md">一般情况下，ROM中的<code>0xFFFFFFF0</code>处的数据是一条跳转指令，它会将IP寄存器的值修改为<code>0xF0000</code>，这是BIOS的实际入口地址。这样，CPU就可以跳转到<code>0xF0000</code>处，开始执行BIOS的代码(在<code>0xF0000</code>到<code>0xFFFFF</code>之间，大小64K)。</a></li>
+<li>启动扇区代码负责完成一些基本的初始化操作，然后跳转到更复杂的引导加载程序，如 <code>GRUB</code> 的核心映像（<code>core image</code>，<code>BootLoader</code>的一部分）</li>
+<li>核心映像<code>GRUB</code>开始执行，它负责进一步的初始化操作，如加载<code>GRUB</code>的模块和配置文件<code>grub.cfg</code>。</li>
+<li>启动加载程序<code>GRUB</code>根据<code>grub.cfg</code>文件中的配置，将压缩的内核映像（如<code>vmlinuz</code>）从硬盘加载到内存中。内核映像通常是一个gzip或其他格式压缩的二进制文件。</li>
+<li>根据配置文件<code>grub.cfg</code>，如果使用<code>initrd</code>（初始RAM盘）或<code>initramfs</code>（初始RAM文件系统），启动加载程序也会将这些文件加载到内存中，以便内核在启动时使用。</li>
+<li>内核映像加载完成后，<code>GRUB</code> 将控制权转移给<code>内核的入口点代码</code>，完成控制权从 <code>BIOS</code> 到<code>内核</code>的转移。</li>
+</ol>
+<ul>
+<li><code>GRUB、LILO、syslinux</code>是<code>BootLoader</code>的具体实现。</li>
+<li><code>vmlinux</code>：核心代码和数据的<code>ELF文件</code>。它是未经压缩和未经过处理的内核映像，通常位于内核源码目录的根目录下，包含所有内核代码、内核模块，相关数据结构，调试符号和符号表信息</li>
+<li>在获得编译文件<code>vmlinux</code>后，通常使用压缩工具做进一步处理，将 <code>vmlinux</code> 压缩生成 <code>vmlinuz</code>。通常使用 <code>gzip</code> 或其他压缩工具，然后再生成<code>引导加载程序格式的内核映像</code>，一些系统需要特定格式的内核映像，例如 <code>bzImage</code>（适用于 x86 架构）。</li>
+<li><code>vmlinuz</code>、<code>bzImage</code>、<code>zImage</code> 和 <code>uImage</code> 都是不同的 Linux 内核映像文件格式，它们各自有不同的用途和特性。在 Android 系统中，内核的压缩文件格式通常是<code>zImage</code>或<code>Image.gz</code>，具体取决于所使用的启动加载程序和设备的要求。</li>
+</ul>
+</li>
+<li>内核解压缩<ol>
+<li>书接上文，BootLoader根据<code>grub.cfg</code>文件中的配置加载内核映像（<code>vmlinuz</code>）到内存，并跳转到内核映像的入口点，即内核代码的起始地址。</li>
+<li>内核入口点代码（在 header.S 中）会设置初始的 CPU 状态和内存环境，然后跳转到解压缩代码的入口（32位方法<code>startup_32</code>，64位方法<code>startup_64</code>）。</li>
+<li>设置解压环境，如设置段寄存器、建立临时堆栈等。</li>
+<li>调用解压缩入口方法 <code>decompress_kernel_method</code></li>
+<li>选择解压缩算法并调用相应的解压缩函数</li>
+<li>解压完成后跳转到解压后到内核入口点（<code>arch/x86/boot/compressed/head_64.S</code>中定义了一个跳转指令，内核入口点的地址加载到寄存器中（例如 <code>%eax</code>），通常是内核主函数（<code>start_kernel</code>），跳转后即将控制权转移到解压后的内核代码）</li>
+</ol>
+<ul>
+<li>书接上文：<a href="Linux kernel 启动流程.md"><code>initrd</code>:我理解就是在 <code>init</code> 之前找一个临时的根文件系统进行挂载，挂载的就是 <code>initrd</code>，比如<code>ramdisk</code>，<code>initramfs</code></a></li>
+<li>加载 <code>vmlinuz</code>（Linux 内核映像）时，通常还会加载 <code>initrd</code>（<code>initial ramdisk</code>）或 <code>initramfs</code>（<code>initial ram filesystem</code>）文件，其特性如下：<ul>
+<li>硬件驱动支持： 在系统启动时，内核可能需要加载某些<code>硬件驱动程序</code>（如文件系统驱动、磁盘驱动、网络驱动等）来访问<code>根文件系统</code>。这些驱动程序可能并未内置在内核映像中，而是作为模块存在。<code>initrd/initramfs</code> 提供了一个<code>早期的文件系统</code>，内核可以从中加载必要的模块。</li>
+<li>根文件系统挂载：在一些复杂的存储配置中，如<code>LVM</code>（<code>Logical Volume Manager</code>）、<code>RAID</code>、<code>加密文件系统</code>等，内核需要在<code>挂载实际根文件系统之前</code>进行一些初始化操作。这些操作通常通过 <code>initrd/initramfs</code> 中的脚本完成。</li>
+<li>通用内核：发行版通常提供通用内核以支持<code>多种硬件配置</code>。使用<code>initrd/initramfs</code>可以在启动时动态加载适配不同硬件配置的模块，而无需为每种硬件配置编译一个特定的内核。</li>
+</ul>
+</li>
+<li>加载过程如下：<ul>
+<li>启动加载程序(<code>BootLoader</code>)将<code>内核映像</code>和<code>initrd/initramfs</code>文件加载到内存中，并将控制权交给内核。</li>
+<li>内核启动时会识别并加载<code>initrd/initramfs</code>文件，将其作为<code>初始根文件系统</code>挂载。</li>
+<li>内核从<code>临时根文件系统中</code>加载必要的模块并运行初始化脚本。</li>
+<li>初始化脚本完成必要的硬件初始化和配置后，会挂载<code>实际的根文件系统</code>（如 <code>/dev/sda1</code>）。</li>
+<li>初始化脚本切换到<code>实际根文件系统</code>，然后<code>移除initrd/initramfs文件</code>。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><code>start_kernel</code>内核启动</p>
+<p>  start_kernel 方法通常定义在 init/main.c 中，是 Linux 启动过程中的第一个 C 函数。</p>
+<p>  开始源码分析之前，先明确一些概念：</p>
+<ul>
+<li>内核进程：内核进程是由<code>内核</code>创建和调度的进程，运行在<code>内核态</code>，用于处理内核的各类任务。与用户进程不同，内核进程<code>不直接与用户空间交互</code>，主要用于执行内核内部的工作，如处理中断、管理设备、调度任务等。</li>
+<li>用户进程：用户进程是在<code>用户空间</code>中执行的进程，用户通过编写和执行应用程序来创建用户进程。用户进程通过<code>系统调用</code>与<code>内核交互</code>，进行资源分配、文件操作、网络通信等。</li>
+<li>0号进程（<code>swapper/idle/空闲进程</code>）：是内核进程，运行在内核态，负责在系统空闲时执行，避免CPU闲置。在系统引导过程中，由内核初始化代码创建。</li>
+<li>1号进程（<code>init进程</code>）：是用户进程，虽然最初由内核创建，但主要运行在<code>用户态</code>，负责<code>系统初始化和管理用户空间的其他用户进程</code>。通过<code>kernel_init</code>创建。</li>
+<li><p>2号进程（<code>kthreadd进程</code>）：是内核进程，运行在<code>内核态</code>，负责<code>创建和管理其他内核线程</code>。这些内核线程通常用于执行内核中的异步任务，如磁盘I/O、网络操作等。通过<code>kthreadd</code>创建。</p>
+<p>源码如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">asmlinkage __visible <span class="type">void</span> __init <span class="title">start_kernel</span><span class="params">(<span class="type">void</span>)</span>  </span></span><br><span class="line"><span class="function"></span>&#123;  </span><br><span class="line">    <span class="type">char</span> *command_line;  </span><br><span class="line">    <span class="keyword">extern</span> <span class="type">const</span> <span class="keyword">struct</span> <span class="title class_">kernel_param</span> __start___param[], __stop___param[];  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">/* ... 其他初始化代码 ... */</span>  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">/* 设置页表和内存管理 */</span>  </span><br><span class="line">    <span class="built_in">paging_init</span>();  </span><br><span class="line">    <span class="built_in">mem_init</span>();  </span><br><span class="line">    <span class="built_in">kmem_cache_init</span>();  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">/* 设备和驱动程序初始化 */</span>  </span><br><span class="line">    <span class="built_in">driver_init</span>();  </span><br><span class="line">    <span class="built_in">init_irq_proc</span>();  </span><br><span class="line">    <span class="built_in">softirq_init</span>();  </span><br><span class="line">    <span class="built_in">time_init</span>();  </span><br><span class="line">    <span class="built_in">console_init</span>();  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">/* 文件系统初始化 */</span>  </span><br><span class="line">    <span class="built_in">vfs_caches_init_early</span>();  </span><br><span class="line">    <span class="built_in">mnt_init</span>();  </span><br><span class="line">    <span class="built_in">init_rootfs</span>();  </span><br><span class="line">    <span class="built_in">init_mount_tree</span>();  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">/* 初始化进程 */</span>  </span><br><span class="line">    <span class="built_in">pid_cache_init</span>();  </span><br><span class="line">    <span class="built_in">proc_caches_init</span>();  </span><br><span class="line">    <span class="comment">/* 启动 init 进程 */</span></span><br><span class="line">    <span class="built_in">rest_init</span>();  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">/* ... 其他初始化代码 ... */</span>  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">/* 调用内核参数解析函数 */</span>  </span><br><span class="line">    <span class="built_in">kernel_param_init</span>(karg_strings, num_args);  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">/* ... 其他初始化代码 ... */</span>  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">/* 永远不会返回 */</span>  </span><br><span class="line">    <span class="built_in">cpu_idle</span>();  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>和内核启动相关的部分如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 内核启动入口</span></span><br><span class="line"><span class="built_in">start_kernel</span>()</span><br><span class="line">    <span class="comment">// 初始化虚拟文件系统缓存</span></span><br><span class="line">    <span class="built_in">vfs_caches_init</span>()</span><br><span class="line">        <span class="comment">// 初始化挂载点相关的结构</span></span><br><span class="line">        <span class="built_in">mnt_init</span>()</span><br><span class="line">            <span class="comment">// 初始化根文件系统</span></span><br><span class="line">            <span class="built_in">init_rootfs</span>()</span><br><span class="line">                <span class="comment">// 判断是否配置了 TMPFS 并且 root 名称保存为空，还要检测是否指定了 tmpfs 作为根文件系统</span></span><br><span class="line">                <span class="keyword">if</span> (<span class="built_in">IS_ENABLED</span>(CONFIG_TMPFS) &amp;&amp; !saved_root_name[<span class="number">0</span>] &amp;&amp; (!root_fs_names || <span class="built_in">strstr</span>(root_fs_names, <span class="string">&quot;tmpfs&quot;</span>)))</span><br><span class="line">                    is_tmpfs = <span class="literal">true</span>; <span class="comment">// 标记使用 tmpfs 作为根文件系统</span></span><br><span class="line">            <span class="comment">// 初始化并挂载整个根文件系统树</span></span><br><span class="line">            <span class="built_in">init_mount_tree</span>()</span><br><span class="line">                <span class="comment">// 恢复并内核挂载 rootfs 文件系统</span></span><br><span class="line">                <span class="built_in">vfs_kern_mount</span>(&amp;rootfs_fs_type, <span class="number">0</span>, <span class="string">&quot;rootfs&quot;</span>, <span class="literal">NULL</span>)</span><br><span class="line">                    <span class="comment">/* 初始化当前进程的工作目录和根目录，这里是 0 号进程，称为 idle 或 swapper 进程 */</span></span><br><span class="line">                    <span class="built_in">set_fs_pwd</span>(current-&gt;fs, &amp;root);</span><br><span class="line">                    <span class="built_in">set_fs_root</span>(current-&gt;fs, &amp;root);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调用架构相关的初始化</span></span><br><span class="line">    <span class="built_in">arch_call_rest_init</span>()</span><br><span class="line">        <span class="comment">// 执行剩余的初始化</span></span><br><span class="line">        <span class="built_in">rest_init</span>()</span><br><span class="line">            <span class="comment">// 创建 1 号进程 (init 进程)，继承文件系统结构信息</span></span><br><span class="line">            <span class="built_in">kernel_thread</span>(kernel_init, <span class="literal">NULL</span>, CLONE_FS)</span><br><span class="line">                <span class="comment">// 初始化内核，并完成不需要硬件支持的工作</span></span><br><span class="line">                <span class="built_in">kernel_init_freeable</span>()</span><br><span class="line">                    <span class="comment">// 完成基本设置</span></span><br><span class="line">                    <span class="built_in">do_basic_setup</span>()</span><br><span class="line">                        <span class="comment">// 执行所有初始化调用函数 (init call)</span></span><br><span class="line">                        <span class="built_in">do_initcalls</span>() -&gt; <span class="built_in">rootfs_initcall</span>(populate_rootfs)</span><br><span class="line">                            <span class="comment">// 填充根文件系统</span></span><br><span class="line">                            <span class="built_in">do_populate_rootfs</span>()</span><br><span class="line">                                <span class="comment">// 解压初始化 ramfs 到根文件系统</span></span><br><span class="line">                                <span class="built_in">unpack_to_rootfs</span>(__initramfs_start, __initramfs_size)</span><br><span class="line"></span><br><span class="line">                                <span class="meta">#<span class="keyword">ifdef</span> CONFIG_BLK_DEV_RAM</span></span><br><span class="line">                                <span class="comment">// 如果启用了 RAM 磁盘设备，填充 INITRD 镜像</span></span><br><span class="line">                                <span class="built_in">populate_initrd_image</span>(err);</span><br><span class="line"></span><br><span class="line">                    <span class="comment">// 当根文件系统就绪后控制台初始化</span></span><br><span class="line">                    <span class="built_in">console_on_rootfs</span>()</span><br><span class="line">                    <span class="comment">// 如果不能访问指定的启动命令，准备 namespace</span></span><br><span class="line">                    <span class="keyword">if</span> (<span class="built_in">init_eaccess</span>(ramdisk_execute_command) != <span class="number">0</span>)</span><br><span class="line">                        <span class="built_in">prepare_namespace</span>()</span><br><span class="line">                            <span class="comment">// 加载临时 root disk 镜像</span></span><br><span class="line">                            <span class="built_in">initrd_load</span>()</span><br><span class="line">                            <span class="comment">// 挂载根文件系统</span></span><br><span class="line">                            <span class="built_in">mount_root</span>()</span><br><span class="line">                                <span class="comment">/* 创建设备节点 /dev/root, 并挂载到 ROOT_DEV 指定位置 */</span></span><br><span class="line">                                <span class="built_in">create_dev</span>(<span class="string">&quot;/dev/root&quot;</span>, ROOT_DEV)</span><br><span class="line">                                <span class="comment">// 使用块设备文件系统挂载根</span></span><br><span class="line">                                <span class="built_in">mount_block_root</span>(<span class="string">&quot;/dev/root&quot;</span>, root_mountflags)</span><br><span class="line">                            <span class="comment">// 挂载设备文件系统</span></span><br><span class="line">                            <span class="built_in">devtmpfs_mount</span>();</span><br><span class="line">                            <span class="comment">// 将初始化挂载点移动到新挂载位置</span></span><br><span class="line">                            <span class="built_in">init_mount</span>(<span class="string">&quot;.&quot;</span>, <span class="string">&quot;/&quot;</span>, <span class="literal">NULL</span>, MS_MOVE, <span class="literal">NULL</span>);</span><br><span class="line">                            <span class="comment">// 更改根目录以符合 chroot 规范</span></span><br><span class="line">                            <span class="built_in">init_chroot</span>(<span class="string">&quot;.&quot;</span>);</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 尝试运行初始化进程</span></span><br><span class="line">                <span class="built_in">try_to_run_init_process</span>()</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<ol>
+<li><p>不论哪种启动方式，都会走到<code>init_mount_tree()</code>函数，调用<code>vfs_kern_mount</code>，并执行<code>set_fs_pwd, set_fs_root</code> ，这里current是0号进程idle。我们之前提到，不管哪种启动方式，都需要有一个临时的根文件系统，可以是<code>ramfs</code>也可以是<code>tmpfs</code> </p>
+<blockquote>
+<p>0号进程（<code>idle进程</code>）是在系统引导过程中，由<code>内核初始化</code>代码创建的。在x86架构中，这个过程发生在汇编启动代码（通常在<code>arch/x86/kernel/head.S</code>中），该代码会设置基本的CPU和内存环境，然后跳转到C语言的<code>start_kernel</code>函数。</p>
+</blockquote>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 初始化并挂载整个根文件系统树</span></span><br><span class="line">            init_mount_tree()</span><br><span class="line">                <span class="comment">// 恢复并内核挂载 rootfs 文件系统</span></span><br><span class="line">                vfs_kern_mount(&amp;rootfs_fs_type, <span class="number">0</span>, <span class="string">&quot;rootfs&quot;</span>, <span class="literal">NULL</span>)</span><br><span class="line">                    <span class="comment">/* 初始化当前进程的工作目录和根目录，这里是 0 号进程，称为 idle 或 swapper 进程 */</span></span><br><span class="line">                    set_fs_pwd(current-&gt;fs, &amp;root);</span><br><span class="line">                    set_fs_root(current-&gt;fs, &amp;root);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>接下来会在<code>rest_init</code>函数中调用<code>kernel_thread(kernel_init, NULL, CLONE_FS)</code>创建<code>1号进程</code>，并继承挂载的<code>rootfs</code>文件系统信息。</p>
+<p> 然后<code>do_basic_setup</code>初始化驱动，调用<code>populate_rootfs</code>函数，该函数会调用<code>unpack_to_rootfs(__initramfs_start, __initramfs_size)</code>将<code>initramfs</code>的内容解压至<code>rootfs</code></p>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 调用架构相关的初始化</span></span><br><span class="line">    arch_call_rest_init()</span><br><span class="line">        <span class="comment">// 执行剩余的初始化</span></span><br><span class="line">        rest_init()</span><br><span class="line">            <span class="comment">// 创建 1 号进程 (init 进程)，继承文件系统结构信息</span></span><br><span class="line">            kernel_thread(kernel_init, <span class="literal">NULL</span>, CLONE_FS)</span><br><span class="line">                <span class="comment">// 初始化内核，并完成不需要硬件支持的工作</span></span><br><span class="line">                kernel_init_freeable()</span><br><span class="line">                    <span class="comment">// 完成基本设置</span></span><br><span class="line">                    do_basic_setup()</span><br><span class="line">                        <span class="comment">// 执行所有初始化调用函数 (init call)</span></span><br><span class="line">                        do_initcalls() -&gt; rootfs_initcall(populate_rootfs)</span><br><span class="line">                            <span class="comment">// 填充根文件系统</span></span><br><span class="line">                            do_populate_rootfs()</span><br><span class="line">                                <span class="comment">// 解压初始化 ramfs 到根文件系统</span></span><br><span class="line">                                unpack_to_rootfs(__initramfs_start, __initramfs_size)</span><br><span class="line"></span><br><span class="line">                                <span class="meta">#<span class="keyword">ifdef</span> CONFIG_BLK_DEV_RAM</span></span><br><span class="line">                                <span class="comment">// 如果启用了 RAM 磁盘设备，填充 INITRD 镜像</span></span><br><span class="line">                                populate_initrd_image(err);</span><br></pre></td></tr></table></figure>
+<p> 五种启动方式到目前为止的流程基本一致，总结下就是挂载一个<code>临时根文件系统</code>，创建1号进程，执行驱动初始化，如果<code>initramfs</code>符合对应的格式，就将里面的内容解压至<code>rootfs</code>，而后续的操作对不同的启动方式略有不同。</p>
+<h4 id="启动方式-1-1"><a href="#启动方式-1-1" class="headerlink" title="启动方式 1"></a><a href="Linux kernel 启动流程.md">启动方式 1</a></h4> <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">qemu-system-x86_64 -kernel <span class="built_in">arch</span>/x86_64/boot/bzImage -hda my_rootfs/root_disk/disk.img --append <span class="string">&quot;root=/dev/sda init=/init console=ttyS0&quot;</span> -nographic</span><br></pre></td></tr></table></figure>
+<p> 由于<code>initramfs</code>是空的，也没有指定<code>initrd</code>选项，看一下do_populate_rootfs函数的实现</p>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> __init <span class="title function_">do_populate_rootfs</span><span class="params">(<span class="type">void</span> *unused, <span class="type">async_cookie_t</span> cookie)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">char</span> *err = unpack_to_rootfs(__initramfs_start, __initramfs_size); </span><br><span class="line">	</span><br><span class="line">	<span class="keyword">if</span> (!initrd_start || IS_ENABLED(CONFIG_INITRAMFS_FORCE))</span><br><span class="line">		<span class="keyword">goto</span> done;</span><br><span class="line">		</span><br><span class="line">	err = unpack_to_rootfs((<span class="type">char</span> *)initrd_start, initrd_end - initrd_start);</span><br><span class="line">	<span class="keyword">if</span> (err) &#123;</span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> CONFIG_BLK_DEV_RAM</span></span><br><span class="line">		populate_initrd_image(err);</span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">		printk(KERN_EMERG <span class="string">&quot;Initramfs unpacking failed: %s\n&quot;</span>, err);</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">done:</span><br><span class="line">	<span class="keyword">if</span> (!do_retain_initrd &amp;&amp; initrd_start &amp;&amp; !kexec_free_initrd())</span><br><span class="line">		free_initrd_mem(initrd_start, initrd_end);</span><br><span class="line">	initrd_start = <span class="number">0</span>;</span><br><span class="line">	initrd_end = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> <code>initrd_start</code> 显然就是0了，直接进入<code>done</code>标签返回到<code>kernel_init_freeable</code>函数，且<code>initrd_start=init_end=0</code> ，而如果没有设置内核命令行参数<code>&quot;rdinit=&quot;</code>，<code>ramdisk_execute_command</code>初始化为<code>/init</code> ，<code>init_eaccess(ramdisk_execute_command) != 0</code> 这个条件会检查<code>ramdisk_execute_command</code>这个文件是否存在，由于我们没有在<code>rootfs</code>中添加<code>init</code>，所以条件不为0，进入<code>prepare_namespace</code>函数。</p>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (init_eaccess(ramdisk_execute_command) != <span class="number">0</span>)</span><br><span class="line">    prepare_namespace()</span><br></pre></td></tr></table></figure>
+<p> 然后看一下<code>prepare_namespace</code>函数在干嘛。<code>root_device_name</code>是<code>/dev/sda</code>，后面<code>root_device_name+=5</code>相当于把<code>/dev/</code>前缀删掉，进入<code>initrd_load</code>函数，initrd_load函数会使用 <code>create_dev(&quot;/dev/ram&quot;, Root_RAM0)</code> 函数创建一个 <code>/dev/ram</code> 设备节点，映射到<code>RAM0</code>设备，然后尝试加载<code>initrd</code>镜像，由于方式一没有<code>initrd.image</code>，所以没有选择加载。</p>
+<p> 然后会回到<code>prepare_namespace</code>函数，由于我们指定了<code>root=/dev/sda</code>，会执行<code>mount_root, init_mout, init_chroot</code>，先将<code>ROOT_DEV</code>，也就是<code>sda</code>挂载到<code>/dev/root</code>，然后调用 <code>init_mount</code> 将当前工作目录(<strong>`/</strong>root<code>)移动挂载至**</code>/<code>**目录下，再调用</code>init_chroot<code>切换当前进程的根目录至当前目录。而我们之前编译的init可执行文件就会被写入这个目录中，根文件系统挂载完毕以后就可以调用</code>run_init_process(“/init”)<code>执行根文件系统上的</code>init<code>程序了,</code>1号进程<code>就切换到了</code>用户空间`去执行。</p>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> __init <span class="title function_">prepare_namespace</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">	wait_for_device_probe();</span><br><span class="line"></span><br><span class="line">	md_run_setup();</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (saved_root_name[<span class="number">0</span>]) &#123;</span><br><span class="line">		root_device_name = saved_root_name;</span><br><span class="line">		<span class="keyword">if</span> (!<span class="built_in">strncmp</span>(root_device_name, <span class="string">&quot;mtd&quot;</span>, <span class="number">3</span>) ||</span><br><span class="line">		    !<span class="built_in">strncmp</span>(root_device_name, <span class="string">&quot;ubi&quot;</span>, <span class="number">3</span>)) &#123;</span><br><span class="line">			mount_block_root(root_device_name, root_mountflags);</span><br><span class="line">			<span class="keyword">goto</span> out;</span><br><span class="line">		&#125;</span><br><span class="line">		ROOT_DEV = <span class="type">name_to_dev_t</span>(root_device_name);</span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">strncmp</span>(root_device_name, <span class="string">&quot;/dev/&quot;</span>, <span class="number">5</span>) == <span class="number">0</span>)</span><br><span class="line">			root_device_name += <span class="number">5</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (initrd_load())</span><br><span class="line">		<span class="keyword">goto</span> out;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> ((ROOT_DEV == <span class="number">0</span>) &amp;&amp; root_wait) &#123;</span><br><span class="line">		printk(KERN_INFO <span class="string">&quot;Waiting for root device %s...\n&quot;</span>,</span><br><span class="line">			saved_root_name);</span><br><span class="line">		<span class="keyword">while</span> (driver_probe_done() != <span class="number">0</span> ||</span><br><span class="line">			(ROOT_DEV = <span class="type">name_to_dev_t</span>(saved_root_name)) == <span class="number">0</span>)</span><br><span class="line">			msleep(<span class="number">5</span>);</span><br><span class="line">		async_synchronize_full();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	mount_root();</span><br><span class="line">out:</span><br><span class="line">	devtmpfs_mount();</span><br><span class="line">	init_mount(<span class="string">&quot;.&quot;</span>, <span class="string">&quot;/&quot;</span>, <span class="literal">NULL</span>, MS_MOVE, <span class="literal">NULL</span>);</span><br><span class="line">	init_chroot(<span class="string">&quot;.&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 这种方式是<code>rootfs→sda</code></p>
+<h4 id="启动方式-2-1"><a href="#启动方式-2-1" class="headerlink" title="启动方式 2"></a><a href="Linux kernel 启动流程.md">启动方式 2</a></h4> <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">qemu-system-x86_64 -kernel  <span class="built_in">arch</span>/x86_64/boot/bzImage -hda my_rootfs/root_disk/disk.img -initrd my_rootfs/old_ramdisk/ramdisk.img --append <span class="string">&quot;root=/dev/sda init=/init console=ttyS0&quot;</span> -nographic</span><br></pre></td></tr></table></figure>
+<p> 由于指定了<code>-initrd</code>参数，所以会执行<code>unpack_to_rootfs</code> 函数将<code>ramdisk.img</code>的内容解压进<code>rootfs</code>，但是由于其不是<code>cpio</code>格式，而是<code>ext2</code>格式，所以报错<code>&quot;rootfs image is not initramfs (invalid magic at start of compressed archive); looks like an initrd&quot;</code>,并进入到<code>populate_initrd_image()</code>函数。</p>
+<p> <code>populate_initrd_image</code>会在<code>rootfs</code>中创建<code>initrd.image</code>，并将<code>-initrd</code>选项指定的<code>ramdisk.img</code>内容写入<code>/initrd.image</code>文件。</p>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifdef</span> CONFIG_BLK_DEV_RAM</span></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> __init <span class="title function_">populate_initrd_image</span><span class="params">(<span class="type">char</span> *err)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">ssize_t</span> written;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">file</span> *<span class="title">file</span>;</span></span><br><span class="line">	<span class="type">loff_t</span> pos = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">	unpack_to_rootfs(__initramfs_start, __initramfs_size);</span><br><span class="line">	</span><br><span class="line">	file = filp_open(<span class="string">&quot;/initrd.image&quot;</span>, O_WRONLY|O_CREAT|O_LARGEFILE, <span class="number">0700</span>);</span><br><span class="line">	<span class="keyword">if</span> (IS_ERR(file))</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">	written = xwrite(file, (<span class="type">char</span> *)initrd_start, initrd_end - initrd_start,</span><br><span class="line">			&amp;pos);</span><br><span class="line">	<span class="keyword">if</span> (written != initrd_end - initrd_start)</span><br><span class="line">	  fput(file);</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">/* CONFIG_BLK_DEV_RAM */</span></span></span><br></pre></td></tr></table></figure>
+<p> 由于此时根文件系统仍然没有<code>ramdisk_execute_command</code> 文件存在，所以依然会进入<code>prepare_namespace</code>函数，但是这次有了<code>/initrd.image</code>文件，进入到下面这个逻辑</p>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (rd_load_image(<span class="string">&quot;/initrd.image&quot;</span>) &amp;&amp; ROOT_DEV != Root_RAM0) &#123;</span><br><span class="line">    init_unlink(<span class="string">&quot;/initrd.image&quot;</span>);</span><br><span class="line">    handle_initrd();</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> <code>rd_load_image</code>的逻辑是先尝试识别出<code>/initrd.image</code>文件的格式，由于<code>ramdisk.img</code>的格式是<code>ext2</code>,因此会打印出<code>&quot;RAMDISK: ext2 filesystem found at block 0&quot;</code>表示识别出是<code>ext2</code>的文件格式。接下来将<code>/initrd.image</code>文件拷贝至<code>ramdisk</code>设备文件<code>/dev/ram</code>中。</p>
+<p> 由于这种启动方式<code>ROOT_DEV</code>为<code>/dev/sda</code>,<code>ROOT_DEV != Root_RAM0</code>判断就为True，看一下<code>handle_initrd</code>函数：</p>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> __init <span class="title function_">handle_initrd</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">subprocess_info</span> *<span class="title">info</span>;</span></span><br><span class="line">	<span class="type">static</span> <span class="type">char</span> *argv[] = &#123; <span class="string">&quot;linuxrc&quot;</span>, <span class="literal">NULL</span>, &#125;;</span><br><span class="line">	<span class="keyword">extern</span> <span class="type">char</span> *envp_init[];</span><br><span class="line">	<span class="type">int</span> error;</span><br><span class="line">	<span class="comment">// 先创建设备节点/dev/root.old，然后将initrd挂载到rootfs的/root目录，并在根文件系统下创建和切换到/old目录。</span></span><br><span class="line">	real_root_dev = new_encode_dev(ROOT_DEV);</span><br><span class="line">	create_dev(<span class="string">&quot;/dev/root.old&quot;</span>, Root_RAM0);</span><br><span class="line">	mount_block_root(<span class="string">&quot;/dev/root.old&quot;</span>, root_mountflags &amp; ~MS_RDONLY);</span><br><span class="line">	init_mkdir(<span class="string">&quot;/old&quot;</span>, <span class="number">0700</span>);</span><br><span class="line">	init_chdir(<span class="string">&quot;/old&quot;</span>);</span><br><span class="line"></span><br><span class="line">	current-&gt;flags |= PF_FREEZER_SKIP;</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 使用call_usermodehelper_setup设置用户模式帮助程序linuxrc，并调用call_usermodehelper_exec执行。</span></span><br><span class="line">	info = call_usermodehelper_setup(<span class="string">&quot;/linuxrc&quot;</span>, argv, envp_init,</span><br><span class="line">					 GFP_KERNEL, init_linuxrc, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">	<span class="keyword">if</span> (!info)</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line">	call_usermodehelper_exec(info, UMH_WAIT_PROC);</span><br><span class="line"></span><br><span class="line">	current-&gt;flags &amp;= ~PF_FREEZER_SKIP;</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 将initrd移动到rootfs的/old目录，并切换回根文件系统的根目录。</span></span><br><span class="line">	init_mount(<span class="string">&quot;..&quot;</span>, <span class="string">&quot;.&quot;</span>, <span class="literal">NULL</span>, MS_MOVE, <span class="literal">NULL</span>);</span><br><span class="line">	init_chroot(<span class="string">&quot;..&quot;</span>);</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 如果解码的真实根设备为Root_RAM0，则返回。</span></span><br><span class="line">	<span class="keyword">if</span> (new_decode_dev(real_root_dev) == Root_RAM0) &#123;</span><br><span class="line">		init_chdir(<span class="string">&quot;/old&quot;</span>);</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// 否则，尝试将旧根文件系统移动到/root/initrd，再调用mount_root继续dev/sda挂载</span></span><br><span class="line">	init_chdir(<span class="string">&quot;/&quot;</span>);</span><br><span class="line">	ROOT_DEV = new_decode_dev(real_root_dev);</span><br><span class="line">	mount_root();</span><br><span class="line"></span><br><span class="line">	printk(KERN_NOTICE <span class="string">&quot;Trying to move old root to /initrd ... &quot;</span>);</span><br><span class="line">	error = init_mount(<span class="string">&quot;/old&quot;</span>, <span class="string">&quot;/root/initrd&quot;</span>, <span class="literal">NULL</span>, MS_MOVE, <span class="literal">NULL</span>);</span><br><span class="line">	<span class="keyword">if</span> (!error)</span><br><span class="line">		printk(<span class="string">&quot;okay\n&quot;</span>);</span><br><span class="line">	<span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> (error == -ENOENT)</span><br><span class="line">			printk(<span class="string">&quot;/initrd does not exist. Ignored.\n&quot;</span>);</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">			printk(<span class="string">&quot;failed\n&quot;</span>);</span><br><span class="line">		printk(KERN_NOTICE <span class="string">&quot;Unmounting old root\n&quot;</span>);</span><br><span class="line">		init_umount(<span class="string">&quot;/old&quot;</span>, MNT_DETACH);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 最后回到<code>prepare_namespace</code>，挂载<code>sda</code>后返回，执行<code>run_init_process(&quot;/init&quot;)</code>函数启动位于<code>sda</code>设备上的<code>init</code>进程。</p>
+<p> 这种启动方式是 <code>rootfs→ramdisk initrd→sda</code></p>
+<h4 id="启动方式-3-1"><a href="#启动方式-3-1" class="headerlink" title="启动方式 3"></a><a href="Linux kernel 启动流程.md">启动方式 3</a></h4> <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">qemu-system-x86_64 -kernel  <span class="built_in">arch</span>/x86_64/boot/bzImage -initrd my_rootfs/initrd/disk.img  --append <span class="string">&quot;root=/dev/ram0 init=/init console=ttyS0&quot;</span> -nographic</span><br></pre></td></tr></table></figure>
+<p> 和启动方式2的区别就是<code>root=/dev/ram0</code>指定的最终根文件系统是<code>/dev/ram0</code></p>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (rd_load_image(<span class="string">&quot;/initrd.image&quot;</span>) &amp;&amp; ROOT_DEV != Root_RAM0) &#123;</span><br><span class="line">    init_unlink(<span class="string">&quot;/initrd.image&quot;</span>);</span><br><span class="line">    handle_initrd();</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 执行这个判断的时候就不会进入<code>handle_initrd</code>函数，而是将ram0直接挂载到根文件系统执行上面的<code>init</code>文件</p>
+<p> 这种方式也是<code>ramdisk</code>到一种应用，是<code>rootfs→ram0</code></p>
+<h4 id="启动方式-4-1"><a href="#启动方式-4-1" class="headerlink" title="启动方式 4"></a><a href="Linux kernel 启动流程.md">启动方式 4</a></h4> <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">qemu-system-x86_64 -kernel  arch/x86_64/boot/bzImage -initrd my_rootfs/initrd_cpio/simple_initrd.cpio.gz  --append <span class="string">&quot;init=/init console=ttyS0&quot;</span> -nographic</span><br></pre></td></tr></table></figure>
+<p> 指定了<code>-initrd</code>参数，且格式是<code>cpio</code>格式，那么在<code>do_populate_rootfs</code>函数执行<code>unpack_to_rootfs</code>解压时会成功，将<code>-initrd</code>选项指定的<code>simple_initrd.cpio.gz</code>内容解压至<code>rootfs</code> ，且不会进入与<code>ramdisk</code>相关的<code>populate_initrd_image</code>函数，而是调用<code>free_initrd_mem</code>将<code>initrd</code>的物理内存释放掉。</p>
+<p> 此时<code>rootfs</code>也有了<code>/init</code>文件，所以<code>init_eaccess(ramdisk_execute_command) !**=** 0</code>这个条件不成立，也不会进入<code>prepare_namespace</code>函数，而是直接<code>run_init_process(&quot;/init&quot;)</code>执行<code>init</code>程序。</p>
+<p> <code>cpio</code>的格式非常简单，内核的解压代码也非常少。这种启动方式虽然也叫<code>initrd</code>,但是用的是<code>cpio</code>格式的<code>initrd</code>,和上面<code>ramdisk</code>格式的<code>initrd</code>区别很大，为主流的启动方式，<code>init</code>进程启动以后可以再执行额外查找并挂载文件系统的操作，只不过这些都是用户空间的事了。</p>
+<p> 这种方式是<code>rootfs→cpio initrd</code></p>
+<h4 id="启动方式-5-1"><a href="#启动方式-5-1" class="headerlink" title="启动方式 5"></a><a href="Linux kernel 启动流程.md">启动方式 5</a></h4> <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">qemu-system-x86_64 -kernel <span class="built_in">arch</span>/x86_64/boot/bzImage --append <span class="string">&quot;init=/init console=ttyS0&quot;</span> -nographic</span><br></pre></td></tr></table></figure>
+<p> 和启动方式4差不多，只是把cpio压缩包和内核编译在了一起。</p>
+<p> 由于添加了配置项，在<code>do_populate_rootfs</code>函数</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">/* Load the built <span class="keyword">in</span> initramfs */</span><br><span class="line">	char *err = unpack_to_rootfs(__initramfs_start, __initramfs_size);</span><br><span class="line">	<span class="keyword">if</span> (err)</span><br><span class="line">		panic_show_mem(<span class="string">&quot;%s&quot;</span>, err); /* Failed to decompress INTERNAL initramfs */</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (!initrd_start || IS_ENABLED(CONFIG_INITRAMFS_FORCE))</span><br><span class="line">		goto <span class="keyword">done</span>;</span><br></pre></td></tr></table></figure>
+<p> 这部分执行完以后，就直接去了<code>done</code>标签返回。</p>
+<p> 这种方式是<code>rootfs-&gt;initramfs</code></p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><ol>
+<li><code>启动方式1</code>直接把<code>sda</code>设备指定为最终的<code>rootfs</code>启动<code>init</code>进程，局限性较高。</li>
+<li><code>启动方式2</code>利用<code>ramdisk initrd</code>在挂载最终的<code>rootfs</code>之前，会在<code>ramdisk initrd</code>中执行<code>linuxrc</code>程序进行预处理，加载<code>init</code>进程需要的环境，但是这种方式已被弃用。</li>
+<li><code>启动方式3</code>也是利用<code>ramdisk</code>技术，将<code>init</code>直接写入<code>ram0</code>中，并把<code>dev/ram0</code>作为最终的<code>rootfs</code>。</li>
+<li><code>启动方式4</code>使用<code>cpio格式的initrd</code>，直接将文件系统解压到内存中，运行<code>init</code>进程，然后再在用户态执行后续的挂载等操作。</li>
+<li><p><code>启动方式5</code>把<code>cpio-gzip</code>文件和内核编译到一起，在<code>initramfs</code>直接启动<code>init</code>进程。</p>
+<p>综上所述这五种启动方式都会有可用的<code>rootfs</code>,i<code>nitrd分为ramdisk initrd和cpio initrd</code>,安卓文档中甚至把<code>initrd</code>也叫做<code>initramfs</code>,因此<code>initrd</code>并不单单指的是<code>ramdisk</code>技术，<code>android boot.img</code>中解压出来的<code>ramdisk</code>文件本质上<code>cpio</code>格式,用的并不是<code>ramdisk initrd</code>技术而是<code>cpio initrd</code>。这些名词概念极容易产生误导，理解了上面启动的代码流程才是最重要的。</p>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p><code>init</code>进程引导系统加载启动</p>
+<p>  init进程启动后，通过后续工作完成了操作系统的加载和启动。</p>
+<ol>
+<li>init进程读取<code>系统的初始化脚本</code>（如<code>/etc/inittab, /etc/init.d/</code>脚本）或<code>systemd</code>的单元文件（<code>unit files</code>），执行系统初始化任务。这包括设置系统环境、挂载文件系统、启动网络服务、启动守护进程等。</li>
+<li>如果系统配置为使用图形界面，<code>init</code>进程会启动图形登录管理器（如<code>GDM、LightDM、SDDM</code>）。这些登录管理器负责提供图形化的登录界面，供用户输入用户名和密码。用户登录成功后，登录管理器会启动用户的桌面环境（如<code>GNOME、KDE、Xfce</code>）。桌面环境提供完整的图形用户界面，允许用户运行应用程序、管理文件、设置系统等。</li>
+<li><code>systemd</code>作为<code>init</code>进程启动，读取其配置文件（通常在<code>/lib/systemd/system/</code>和<code>/etc/systemd/system/</code>），然后根据配置文件启动系统目标（如<code>graphical.target</code>），启动图形显示管理服务，显示管理器提供用户登录界面，用户登录后启动用户会话，显示管理器启动桌面环境，用户进入图形用户界面。</li>
+</ol>
+</li>
+</ul>
+<h2 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h2><p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/anywherego/p/18217546">https://www.cnblogs.com/anywherego/p/18217546</a></p>
+<p><a target="_blank" rel="noopener" href="https://bbs.kanxue.com/thread-275939.htm#msg_header_h3_4">https://bbs.kanxue.com/thread-275939.htm#msg_header_h3_4</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://example.com">EPs1l0h</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://example.com/2025/03/22/Linux%20kernel%20%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">https://example.com/2025/03/22/Linux%20kernel%20%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://example.com" target="_blank">EPs1l0h's Castle</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"></div><div class="post_share"><div class="social-share" data-image="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechat.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2025/03/22/Android%20Kernel%20Patch/"><img class="prev-cover" src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="onerror=null;src='/img/404.gif'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Android Kernel Patch</div></div></a></div><div class="next-post pull-right"><a href="/2025/03/22/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/"><img class="next-cover" src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="onerror=null;src='/img/404.gif'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">计算机启动流程</div></div></a></div></nav><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="disqus_thread"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">EPs1l0h</div><div class="author-info__description"></div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">63</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/EPs1l0h"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">Spears shall be shaken! Shields shall be splintered! A sword day! A red day! Ere the sun rises!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Linux-kernel-%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B"><span class="toc-number">1.</span> <span class="toc-text">Linux kernel 启动流程</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86"><span class="toc-number">1.1.</span> <span class="toc-text">前置知识</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#MBR-%E5%88%86%E5%8C%BA%E5%92%8CGPT-%E5%88%86%E5%8C%BA"><span class="toc-number">1.1.1.</span> <span class="toc-text">MBR 分区和GPT 分区</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#MBR-%EF%BC%88Master-Boot-Record%EF%BC%89%E5%88%86%E5%8C%BA"><span class="toc-number">1.1.1.1.</span> <span class="toc-text">MBR （Master Boot Record）分区</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#GPT%EF%BC%88GUID-Partition-Table%EF%BC%89%E5%88%86%E5%8C%BA"><span class="toc-number">1.1.1.2.</span> <span class="toc-text">GPT（GUID Partition Table）分区</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ramdisk-initrd-ramfs-tmpfs-initramfs-rootfs-%E6%A0%B9%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F"><span class="toc-number">1.1.1.3.</span> <span class="toc-text">ramdisk, initrd, ramfs, tmpfs, initramfs, rootfs, 根文件系统</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Linux-Kernel-%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B"><span class="toc-number">1.2.</span> <span class="toc-text">Linux Kernel 启动流程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Linux-Kernel-%E5%90%AF%E5%8A%A8%E7%9A%84%E4%BA%94%E7%A7%8D%E6%96%B9%E5%BC%8F"><span class="toc-number">1.2.1.</span> <span class="toc-text">Linux Kernel 启动的五种方式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8%E6%96%B9%E5%BC%8F-1"><span class="toc-number">1.2.1.1.</span> <span class="toc-text">启动方式 1</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8%E6%96%B9%E5%BC%8F-2"><span class="toc-number">1.2.1.2.</span> <span class="toc-text">启动方式 2</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8%E6%96%B9%E5%BC%8F-3"><span class="toc-number">1.2.1.3.</span> <span class="toc-text">启动方式 3</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8%E6%96%B9%E5%BC%8F-4"><span class="toc-number">1.2.1.4.</span> <span class="toc-text">启动方式 4</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8%E6%96%B9%E5%BC%8F-5"><span class="toc-number">1.2.1.5.</span> <span class="toc-text">启动方式 5</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#linux-kernel-%E5%90%AF%E5%8A%A8%E5%85%B7%E4%BD%93%E6%B5%81%E7%A8%8B"><span class="toc-number">1.2.2.</span> <span class="toc-text">linux_kernel 启动具体流程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8%E6%96%B9%E5%BC%8F-1-1"><span class="toc-number">1.2.2.1.</span> <span class="toc-text">启动方式 1</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8%E6%96%B9%E5%BC%8F-2-1"><span class="toc-number">1.2.2.2.</span> <span class="toc-text">启动方式 2</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8%E6%96%B9%E5%BC%8F-3-1"><span class="toc-number">1.2.2.3.</span> <span class="toc-text">启动方式 3</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8%E6%96%B9%E5%BC%8F-4-1"><span class="toc-number">1.2.2.4.</span> <span class="toc-text">启动方式 4</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8%E6%96%B9%E5%BC%8F-5-1"><span class="toc-number">1.2.2.5.</span> <span class="toc-text">启动方式 5</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">1.2.2.6.</span> <span class="toc-text">总结</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="toc-number">1.3.</span> <span class="toc-text">参考文档</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/03/22/Android%20Kernel%20Patch/" title="Android Kernel Patch"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="Android Kernel Patch"/></a><div class="content"><a class="title" href="/2025/03/22/Android%20Kernel%20Patch/" title="Android Kernel Patch">Android Kernel Patch</a><time datetime="2025-03-22T10:04:21.000Z" title="发表于 2025-03-22 18:04:21">2025-03-22</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/03/22/Linux%20kernel%20%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/" title="Linux kernel 启动流程"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="Linux kernel 启动流程"/></a><div class="content"><a class="title" href="/2025/03/22/Linux%20kernel%20%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/" title="Linux kernel 启动流程">Linux kernel 启动流程</a><time datetime="2025-03-22T05:25:14.000Z" title="发表于 2025-03-22 13:25:14">2025-03-22</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/03/22/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/" title="计算机启动流程"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="计算机启动流程"/></a><div class="content"><a class="title" href="/2025/03/22/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/" title="计算机启动流程">计算机启动流程</a><time datetime="2025-03-22T05:25:14.000Z" title="发表于 2025-03-22 13:25:14">2025-03-22</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/03/21/%E8%93%9D%E5%B8%BD%E6%9D%AF2022%E5%8D%8A%E5%86%B3%E8%B5%9BWP%E2%80%94%E2%80%94%E8%A6%81%E8%93%9D%E5%B8%BD%E4%B8%8D%E8%A6%81%E7%BB%BF%E5%B8%BD/" title="蓝帽杯(取证杯）2022半决赛WP"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover2.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="蓝帽杯(取证杯）2022半决赛WP"/></a><div class="content"><a class="title" href="/2025/03/21/%E8%93%9D%E5%B8%BD%E6%9D%AF2022%E5%8D%8A%E5%86%B3%E8%B5%9BWP%E2%80%94%E2%80%94%E8%A6%81%E8%93%9D%E5%B8%BD%E4%B8%8D%E8%A6%81%E7%BB%BF%E5%B8%BD/" title="蓝帽杯(取证杯）2022半决赛WP">蓝帽杯(取证杯）2022半决赛WP</a><time datetime="2025-03-21T10:42:55.748Z" title="发表于 2025-03-21 18:42:55">2025-03-21</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/03/21/%E8%93%9D%E5%B8%BD%E6%9D%AF2022%E5%88%9D%E8%B5%9B%E5%A4%8D%E7%8E%B0/" title="蓝帽杯(电子取证杯)2022赛题复现"><img src="https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover3.jpg?raw=true" onerror="this.onerror=null;this.src='/img/404.gif'" alt="蓝帽杯(电子取证杯)2022赛题复现"/></a><div class="content"><a class="title" href="/2025/03/21/%E8%93%9D%E5%B8%BD%E6%9D%AF2022%E5%88%9D%E8%B5%9B%E5%A4%8D%E7%8E%B0/" title="蓝帽杯(电子取证杯)2022赛题复现">蓝帽杯(电子取证杯)2022赛题复现</a><time datetime="2025-03-21T10:42:55.747Z" title="发表于 2025-03-21 18:42:55">2025-03-21</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('https://github.com/EPs1l0h/EPs1l0h.github.io/blob/main/medias/cover/cover1.jpg?raw=true')"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2025 By EPs1l0h</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.min.js"></script><div class="js-pjax"><script>if (!window.MathJax) {
+  window.MathJax = {
+    tex: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]],
+      tags: 'ams'
+    },
+    chtml: {
+      scale: 1.2
+    },
+    options: {
+      renderActions: {
+        findScript: [10, doc => {
+          for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+            const display = !!node.type.match(/; *mode=display/)
+            const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+            const text = document.createTextNode('')
+            node.parentNode.replaceChild(text, node)
+            math.start = {node: text, delim: '', n: 0}
+            math.end = {node: text, delim: '', n: 0}
+            doc.math.push(math)
+          }
+        }, ''],
+        insertScript: [200, () => {
+          document.querySelectorAll('mjx-container:not\([display]\)').forEach(node => {
+            const target = node.parentNode
+            if (target.nodeName.toLowerCase() === 'li') {
+              target.parentNode.classList.add('has-jax')
+            } else {
+              target.classList.add('has-jax')
+            }
+          });
+        }, '', false]
+      }
+    }
+  }
+  
+  const script = document.createElement('script')
+  script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+  script.id = 'MathJax-script'
+  script.async = true
+  document.head.appendChild(script)
+} else {
+  MathJax.startup.document.state(0)
+  MathJax.texReset()
+  MathJax.typeset()
+}</script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js"></script><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', { class: 'katex-wrap'})
+  })
+})()</script><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://example.com/2025/03/22/Linux%20kernel%20%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/'
+    this.page.identifier = '/2025/03/22/Linux%20kernel%20%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/'
+    this.page.title = 'Linux kernel 启动流程'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+
+  document.getElementById('darkmode').addEventListener('click', () => {
+    setTimeout(() => window.disqusReset(), 200)
+  })
+}
+
+if ('Disqus' === 'Disqus' || !false) {
+  if (false) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script></div><div class="aplayer no-destroy" data-id="2981528901" data-server="netease" data-type="playlist" data-fixed="true" data-autoplay="true"> </div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/metingjs/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+
+  // removeEventListener scroll 
+  window.tocScrollFn && window.removeEventListener('scroll', window.tocScrollFn)
+  window.scrollCollect && window.removeEventListener('scroll', scrollCollect)
+
+  typeof preloader === 'object' && preloader.initLoading()
+  document.getElementById('rightside').style.cssText = "opacity: ''; transform: ''"
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+  typeof disqusjs === 'object' && disqusjs.destroy()
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+document.addEventListener('pjax:error', (e) => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
